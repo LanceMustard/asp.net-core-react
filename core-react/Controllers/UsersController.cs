@@ -9,62 +9,62 @@ using Microsoft.AspNetCore.Cors;
 using Core.React.Models;
 using Core.React.Testing;
 
-namespace Core.React.Controllers
+namespace core_react.Controllers
 {
     [EnableCors("OpenToAll")]
     [Produces("application/json")]
-    [Route("api/Employees")]
-    public class EmployeesController : Controller
+    [Route("api/Users")]
+    public class UsersController : Controller
     {
         private readonly ApplicationContext _context;
 
-        public EmployeesController(ApplicationContext context)
+        public UsersController(ApplicationContext context)
         {
             _context = context;
             InitializeData.BuildDataset(context);
         }
 
-        // GET: api/Employees
+        // GET: api/Users
         [HttpGet]
-        public IEnumerable<Employee> GetEmployees()
+        public IEnumerable<User> GetUsers()
         {
-            return _context.Employees;
+            return _context.Users;
         }
 
-        // GET: api/Employees/5
+        // GET: api/Users/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetEmployee([FromRoute] int id)
+        public async Task<IActionResult> GetUser([FromRoute] int id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var employee = await _context.Employees.SingleOrDefaultAsync(m => m.Id == id);
+            var user = await _context.Users.SingleOrDefaultAsync(m => m.Id == id);
 
-            if (employee == null)
+            if (user == null)
             {
                 return NotFound();
             }
 
-            return Ok(employee);
+            return Ok(user);
         }
 
-        // PUT: api/Employees/5
+        // PUT: api/Users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutEmployee([FromRoute] int id, [FromBody] Employee employee)
+        public async Task<IActionResult> PutUser([FromRoute] int id, [FromBody] User user)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (id != employee.Id)
+            if (id != user.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(employee).State = EntityState.Modified;
+            _context.Entry(user).State = EntityState.Modified;
 
             try
             {
@@ -72,7 +72,7 @@ namespace Core.React.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!EmployeeExists(id))
+                if (!UserExists(id))
                 {
                     return NotFound();
                 }
@@ -82,53 +82,48 @@ namespace Core.React.Controllers
                 }
             }
 
-            return Ok(employee);
+            return NoContent();
         }
 
-        // POST: api/Employees
+        // POST: api/Users
         [HttpPost]
-        public async Task<IActionResult> PostEmployee([FromBody] Employee employee)
+        public async Task<IActionResult> PostUser([FromBody] User user)
         {
-            // if no Id defind, auto assign to the current highest Id plus 1
-            if (employee.Id == 0)
-            {
-                employee.Id = _context.Employees.OrderByDescending(x => x.Id).FirstOrDefault().Id + 1;
-            }
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            _context.Employees.Add(employee);
+            _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetEmployee", new { id = employee.Id }, employee);
+            return CreatedAtAction("GetUser", new { id = user.Id }, user);
         }
 
-        // DELETE: api/Employees/5
+        // DELETE: api/Users/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEmployee([FromRoute] int id)
+        public async Task<IActionResult> DeleteUser([FromRoute] int id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var employee = await _context.Employees.SingleOrDefaultAsync(m => m.Id == id);
-            if (employee == null)
+            var user = await _context.Users.SingleOrDefaultAsync(m => m.Id == id);
+            if (user == null)
             {
                 return NotFound();
             }
 
-            _context.Employees.Remove(employee);
+            _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
-            return Ok(employee);
+            return Ok(user);
         }
 
-        private bool EmployeeExists(int id)
+        private bool UserExists(int id)
         {
-            return _context.Employees.Any(e => e.Id == id);
+            return _context.Users.Any(e => e.Id == id);
         }
     }
 }

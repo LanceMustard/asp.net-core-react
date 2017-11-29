@@ -2,10 +2,10 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import EmployeeTable from './EmployeeTable';
 import EmployeeForm from './EmployeeForm';
-import { fetchEmployee, fetchEmployees, createEmployee, deleteEmployee, newEmployee, updateEmployee } from '../actions/index';
-import './../styles/site.css';
+import { fetchEmployee, fetchEmployees, createEmployee, deleteEmployee, newEmployee, updateEmployee } from '../../actions/employees';
+import './../../styles/site.css';
 
-class Employee extends Component {
+class Employees extends Component {
   constructor(props) {
     super(props);
 
@@ -59,4 +59,4 @@ export default connect(mapStateToProps,
     deleteEmployee,
     newEmployee,
     updateEmployee
-   })(Employee);
+   })(Employees);

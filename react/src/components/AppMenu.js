@@ -20,7 +20,6 @@ class AppMenu extends Component {
     current: 'mail',
   }
   handleClick = (e) => {
-    // console.log('click ', e);
     this.setState({
       current: e.key,
     });
@@ -37,10 +36,10 @@ class AppMenu extends Component {
           <Link to="/"><Icon type="mail" />Home</Link>
         </Menu.Item>
         <SubMenu title={<span><Icon type="setting" />Administration</span>}>
-          <Menu.Item key="user"><Link to="/employee">Users</Link></Menu.Item>
-          <Menu.Item key="user-defined-attributes">User Defined Attributes</Menu.Item>
+          <Menu.Item key="user"><Link to="/users">Users</Link></Menu.Item>
+          <Menu.Item key="user-defined-attributes"><Link to="/employees">User Defined Attributes</Link></Menu.Item>
           <Menu.Item key="evaluators">Evaluators</Menu.Item>
-          <Menu.Item key="data-writers">Date Writers</Menu.Item>
+          <Menu.Item key="data-writers">Data Writers</Menu.Item>
           <Menu.Item key="settings">Settings</Menu.Item>
         </SubMenu>
         <SubMenu title={<span><Icon type="setting" />Company</span>}>

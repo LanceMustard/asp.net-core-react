@@ -28,7 +28,6 @@ export function createEmployee(props) {
 }
 
 export function updateEmployee(props) {
-  console.log('updateEmployee', JSON.stringify(props));
   const request = axios.put(`${ROOT_URL}${EMPLOYEES_API}/${props.id}`, props);
   return {
     type: UPDATE_EMPLOYEE,

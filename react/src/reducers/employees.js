@@ -1,4 +1,4 @@
-import { FETCH_EMPLOYEE, FETCH_EMPLOYEES, CREATE_EMPLOYEE, DELETE_EMPLOYEE, NEW_EMPLOYEE, UPDATE_EMPLOYEE } from '../actions/index';
+import { FETCH_EMPLOYEE, FETCH_EMPLOYEES, CREATE_EMPLOYEE, DELETE_EMPLOYEE, NEW_EMPLOYEE, UPDATE_EMPLOYEE } from '../actions/employees';
 
 const DEFAULT_EMPLOYEE = { id: 0, name: "", gender: "male"};
 const INITIAL_STATE = { all: [], employee: DEFAULT_EMPLOYEE};

@@ -6,13 +6,14 @@ import Promise from 'redux-promise';
 import reducers from './reducers';
 import App from './components/App';
 import registerServiceWorker from './registerServiceWorker';
+import { LocaleProvider } from 'antd';
+import enUS from 'antd/lib/locale-provider/en_US';
 
 const createStoreWithMiddleware = applyMiddleware(Promise)(createStore);
 
-// ReactDOM.render(<App />, document.getElementById('root'));
 ReactDOM.render(
   <Provider store={createStoreWithMiddleware(reducers)}>
-    <App />
+    <LocaleProvider locale={enUS}><App /></LocaleProvider>
   </Provider>
   , document.getElementById('root'));
 registerServiceWorker();

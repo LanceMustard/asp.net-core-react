@@ -3,11 +3,12 @@ import { BrowserRouter as Router, Route } from 'react-router-dom'
 import { Affix } from 'antd'
 import styled from 'styled-components'
 import AppMenu from './AppMenu'
-import AppBreadcrumb from './AppBreadcrumb'
+// import AppBreadcrumb from './AppBreadcrumb'
 import AppFooter from './AppFooter'
 import Login from './Login'
 import Home from './Home'
-import Employee from './Employee'
+import Employees from './administration/Employees'
+import Users from './administration/Users'
 
 const FullScreen = styled.div`
   height: 100vh;
@@ -16,7 +17,7 @@ const FullScreen = styled.div`
 
 class App extends Component {
   state = {
-    breadcrumb: [ 'Home' ],
+    // breadcrumb: [ 'Home' ],
     user: null
   }
   componentWillMount() {
@@ -43,9 +44,9 @@ class App extends Component {
       <FullScreen>
         <Affix>
           <AppMenu user={this.state.user} />
-          <AppBreadcrumb path={this.state.breadcrumb} />
           <Route exact path="/" component={Home}/>
-          <Route path="/employee" component={Employee}/>
+          <Route path="/employees" component={Employees}/>
+          <Route path="/users" component={Users}/>
         </Affix>
         <Affix offsetBottom={0}>
           <AppFooter />

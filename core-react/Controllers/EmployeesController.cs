@@ -11,7 +11,7 @@ using Core.React.Testing;
 
 namespace Core.React.Controllers
 {
-    [EnableCors("OpenToAll")]
+    [EnableCors("CustomCORS")]
     [Produces("application/json")]
     [Route("api/Employees")]
     public class EmployeesController : Controller
@@ -38,6 +38,12 @@ namespace Core.React.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            // if an id of 0 is passed, return a new defaukt Employee record
+            if (id == 0)
+            {
+                return Ok(new Employee());
             }
 
             var employee = await _context.Employees.SingleOrDefaultAsync(m => m.Id == id);

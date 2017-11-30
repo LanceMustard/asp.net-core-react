@@ -29,13 +29,25 @@ namespace Core.React
         {
             services.AddDbContext<ApplicationContext>(opt => opt.UseInMemoryDatabase("EmployeesDB"));
             services.AddMvc();
-            // testing only
-            services.AddCors(o => o.AddPolicy("OpenToAll", builder =>
+            // determine Cross-Origin Request policy
+            if (Environment.GetEnvironmentVariable("PORT") == null )
             {
-                builder.AllowAnyOrigin()
-                       .AllowAnyMethod()
-                       .AllowAnyHeader();
-            }));
+                // development environment only, allow any origin to access the API
+                services.AddCors(o => o.AddPolicy("CustomCORS", builder =>
+                {
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
+                }));
+            }
+            else
+            {
+                // production / testing enviroment
+                services.AddCors(o => o.AddPolicy("CustomCORS", builder =>
+                {
+                    builder.Build();
+                }));
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

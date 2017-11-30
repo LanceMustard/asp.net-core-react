@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ROOT_URL } from './environment'
 
 export const FETCH_USER = 'FETCH_USER';
 export const CREATE_USER = 'CREATE_USER';
@@ -8,7 +9,6 @@ export const DELETE_USER = 'DELETE_USER';
 export const NEW_USER = 'NEW_USER';
 
 // const ROOT_URL = 'http://localhost:53579/';
-const ROOT_URL = 'http://localhost:53579/';
 const USERS_API = 'api/Users';
 
 export function fetchUsers() {

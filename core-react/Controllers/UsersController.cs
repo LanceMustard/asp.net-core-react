@@ -11,7 +11,7 @@ using Core.React.Testing;
 
 namespace core_react.Controllers
 {
-    [EnableCors("OpenToAll")]
+    [EnableCors("CustomCORS")]
     [Produces("application/json")]
     [Route("api/Users")]
     public class UsersController : Controller

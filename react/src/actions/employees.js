@@ -1,14 +1,13 @@
-import axios from 'axios';
-
-export const FETCH_EMPLOYEES = 'FETCH_EMPLOYEES';
-export const CREATE_EMPLOYEE = 'CREATE_EMPLOYEE';
-export const UPDATE_EMPLOYEE = 'UPDATE_EMPLOYEE';
-export const FETCH_EMPLOYEE = 'FETCH_EMPLOYEE';
-export const DELETE_EMPLOYEE = 'DELETE_EMPLOYEE';
-export const NEW_EMPLOYEE = 'NEW_EMPLOYEE';
+import axios from 'axios'
+import { ROOT_URL } from './environment'
+export const FETCH_EMPLOYEES = 'FETCH_EMPLOYEES'
+export const CREATE_EMPLOYEE = 'CREATE_EMPLOYEE'
+export const UPDATE_EMPLOYEE = 'UPDATE_EMPLOYEE'
+export const FETCH_EMPLOYEE = 'FETCH_EMPLOYEE'
+export const DELETE_EMPLOYEE = 'DELETE_EMPLOYEE'
+export const NEW_EMPLOYEE = 'NEW_EMPLOYEE'
 
 // const ROOT_URL = 'http://localhost:53579/';
-const ROOT_URL = 'http://localhost:53579/';
 const EMPLOYEES_API = 'api/Employees';
 
 export function fetchEmployees() {
@@ -20,6 +19,7 @@ export function fetchEmployees() {
 }
 
 export function createEmployee(props) {
+  console.log('createEmployee', JSON.stringify(props));
   const request = axios.post(`${ROOT_URL}${EMPLOYEES_API}`, props);
   return {
     type: CREATE_EMPLOYEE,
@@ -52,7 +52,10 @@ export function deleteEmployee(id) {
 }
 
 export function newEmployee(id) {
+  // returns default employee record
+  const request = axios.get(`${ROOT_URL}${EMPLOYEES_API}/0`);
   return {
-    type: NEW_EMPLOYEE
+    type: NEW_EMPLOYEE,
+    payload: request
   }
 }

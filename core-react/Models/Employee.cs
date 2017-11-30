@@ -17,7 +17,8 @@ namespace Core.React.Models
 
         public Employee()
         {
-
+            // Defaults
+            Gender = "Female";
         }
     }
 }

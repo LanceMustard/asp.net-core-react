@@ -38,7 +38,7 @@ class EmployeeForm extends Component {
           <Button type="primary" disabled={this.props.employee.id === 0 || !pristine || submitting} onClick={handleSubmit(values => this.props.onSubmit({...values, mode: 'new'}))}>
             New
           </Button>
-          <Button type="submit" disabled={pristine || submitting}>
+          <Button type="submit" disabled={pristine || submitting} onClick={handleSubmit(values => this.props.onSubmit({...values, mode: 'submit'}))}>
             Submit
           </Button>
           <Button type="button" disabled={pristine || submitting} onClick={reset}>

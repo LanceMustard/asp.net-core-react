@@ -6,20 +6,20 @@ const INITIAL_STATE = { all: [], employee: DEFAULT_EMPLOYEE};
 export default function(state = INITIAL_STATE, action) {
   switch(action.type) {
     case NEW_EMPLOYEE:
-      return { ...state, employee: DEFAULT_EMPLOYEE };
+      return { ...state, employee: action.payload.data };
     case FETCH_EMPLOYEES:
       return { ...state, all: action.payload.data };
     case FETCH_EMPLOYEE:
       return { ...state, employee: action.payload.data };
     case CREATE_EMPLOYEE:
-      return { 
+      return {
         ...state,
         all: [ ...state.all, action.payload.data ],
-        employee: action.payload.data 
+        employee: action.payload.data
       };
     case UPDATE_EMPLOYEE:
       console.log('Reducer', JSON.stringify(action.payload.data));
-      return { 
+      return {
         ...state,
         all: state.all.map(employee => employee.id === action.payload.data.id ?
           // replace existing employee record that just got updated
@@ -27,14 +27,14 @@ export default function(state = INITIAL_STATE, action) {
           // leave all other records as they where
           employee
         ),
-        employee: action.payload.data 
+        employee: action.payload.data
       };
     case DELETE_EMPLOYEE:
       console.log(JSON.stringify(action.payload.data));
-      return { 
+      return {
         ...state,
         all: state.all.filter(x => x.id !== action.payload.data.id),
-        employee: DEFAULT_EMPLOYEE 
+        employee: DEFAULT_EMPLOYEE
       };
     default:
       return state;

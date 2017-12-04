@@ -9,6 +9,7 @@ import Login from './Login'
 import Home from './Home'
 import Employees from './administration/Employees'
 import Users from './administration/Users'
+import Projects from './doccon/Projects'
 import { saveUser, loadUser } from './../localStorage'
 
 const FullScreen = styled.div`
@@ -44,6 +45,7 @@ class App extends Component {
           <Route exact path="/" component={Home}/>
           <Route path="/employees" component={Employees}/>
           <Route path="/users" component={Users}/>
+          <Route path="/projects" component={Projects}/>
         </Affix>
         <Affix offsetBottom={0}>
           <AppFooter />

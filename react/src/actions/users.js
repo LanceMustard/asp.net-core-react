@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { message } from 'antd'
 
 import { ROOT_URL } from './environment'
 

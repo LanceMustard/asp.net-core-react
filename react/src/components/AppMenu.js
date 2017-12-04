@@ -42,6 +42,12 @@ class AppMenu extends Component {
           <Menu.Item key="data-writers">Data Writers</Menu.Item>
           <Menu.Item key="settings">Settings</Menu.Item>
         </SubMenu>
+        <SubMenu title={<span><Icon type="caret-down" />Supplier Portal</span>}>
+          <Menu.Item key="client">Client Maintenace</Menu.Item>
+          <Menu.Item key="project"><Link to="/projects">Project Maintenance</Link></Menu.Item>
+          <Menu.Item key="supplier"><Link to="/suppliers">Supplier Maintenance</Link></Menu.Item>
+          <Menu.Item key="order"><Link to="/orders">Order Maintenance</Link></Menu.Item>
+        </SubMenu>
         <SubMenu title={<span><Icon type="caret-down" />Company</span>}>
           <Menu.Item key="asset">Asset Maintenance</Menu.Item>
           <Menu.Item key="project">Project Maintenance</Menu.Item>

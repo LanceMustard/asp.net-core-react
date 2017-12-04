@@ -8,4 +8,4 @@ if (!window.location.href.startsWith("http://localhost")) {
   url = "/"
 }
 console.log('environment', url)
-export const ROOT_URL = url;
+export const ROOT_URL = url;  

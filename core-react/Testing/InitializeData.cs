@@ -11,7 +11,10 @@ namespace Core.React.Testing
         static public void BuildDataset(ApplicationContext context)
         {
             if (context.Users.Count() == 0) AddUsers(context);
+            if (context.Projects.Count() == 0) AddProjects(context);
             if (context.Employees.Count() == 0) AddEmployees(context);
+            if (context.Suppliers.Count() == 0) AddSuppliers(context);
+            if (context.Orders.Count() == 0) AddOrders(context);
         }
 
         static private void AddUsers(ApplicationContext context)
@@ -119,6 +122,65 @@ namespace Core.React.Testing
             {
                 Name = "Chris Boucher",
                 Gender = "Male"
+            });
+            context.SaveChanges();
+        }
+
+        static private void AddSuppliers(ApplicationContext context)
+        {
+            context.Suppliers.Add(new Supplier
+            {
+                Name = "Blackwoods",
+            });
+            context.Suppliers.Add(new Supplier
+            {
+                Name = "Siemens",
+            });
+            context.SaveChanges();
+        }
+
+        static private void AddProjects(ApplicationContext context)
+        {
+            context.Projects.Add(new Project
+            {
+                Name = "RIO Tinto",
+            });
+            context.Projects.Add(new Project
+            {
+                Name = "Woodside",
+            });
+            context.SaveChanges();
+        }
+
+        static private void AddOrders(ApplicationContext context)
+        {
+            Project rio = context.Projects.FirstOrDefault(x => x.Name == "RIO Tinto");
+            Project woodside = context.Projects.FirstOrDefault(x => x.Name == "Woodside");
+            Supplier blackwoods = context.Suppliers.FirstOrDefault(x => x.Name == "Blackwoods");
+            Supplier siemens = context.Suppliers.FirstOrDefault(x => x.Name == "Siemens");
+            context.Orders.Add(new Order
+            {
+                Description = "Valves",
+                Project = rio,
+                Supplier = blackwoods,
+            });
+            context.Orders.Add(new Order
+            {
+                Description = "Pumps",
+                Project = rio,
+                Supplier = siemens,
+            });
+            context.Orders.Add(new Order
+            {
+                Description = "Motors",
+                Project = woodside,
+                Supplier = blackwoods,
+            });
+            context.Orders.Add(new Order
+            {
+                Description = "Pipe Fabrication",
+                Project = woodside,
+                Supplier = siemens,
             });
             context.SaveChanges();
         }

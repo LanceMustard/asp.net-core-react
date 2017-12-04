@@ -7,4 +7,5 @@ if (!window.location.href.startsWith("http://localhost")) {
   // must be a production host, use a relative root url
   url = "/"
 }
+console.log('environment', url)
 export const ROOT_URL = url;

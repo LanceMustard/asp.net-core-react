@@ -1,6 +1,7 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { Field, reduxForm } from 'redux-form';
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
+import { Field, reduxForm } from 'redux-form'
+import '../../styles/site.css'
 import {
   SelectField,
   TextField,
@@ -21,7 +22,7 @@ import {
   Button,
   AutoComplete,
   message
-} from 'antd';
+} from 'antd'
 import { fetchUser, fetchUsers, createUser, deleteUser, newUser, updateUser } from '../../actions/users';
 import TableButton from './../../components/TableButton.js'
 import { Header, Wrapper, Side, Body } from '../../components/Layout'
@@ -31,10 +32,13 @@ const FormItem = Form.Item;
 const Option = Select.Option;
 const AutoCompleteOption = AutoComplete.Option;
 
+// const SelectedRow =  {background: 'green'};
+
 class Users extends Component {
   constructor(props) {
     super(props);
-    this.rowSelected = this.rowSelected.bind(this);
+    this.rowSelected = this.rowSelected.bind(this)
+    this.rowClassName = this.rowClassName.bind(this)
     this.columns = [
       {
         title: 'Name',
@@ -65,13 +69,13 @@ class Users extends Component {
     {
       console.log(this)
       console.log(this.props.onSelectRecord)
-      this.props.onSelectRecord(record.id)
+      // this.props.onSelectRecord(record.id)
       // const { onSelectRecord} = this.props
       // onSelectRecord(record.id)
-      // this.props.fetchUser(record.id)
+      this.props.fetchUser(record.id)
     } else {
       if (record.id !== this.props.users.user.id) {
-        message.error(`Changes exist. Either save or clear these changes before continuing`)
+        message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
       }
     }
   }
@@ -119,6 +123,12 @@ class Users extends Component {
     )
   }
 
+  rowClassName(record, index) {
+    // console.log('rowClassName', record)
+    // console.log('rowClassName', index)
+    return record.id === this.props.users.user.id ? 'SelectedRow'  : null;
+  }
+
   render() {
     return (
       <div>
@@ -132,7 +142,8 @@ class Users extends Component {
               dataSource={this.props.users.all}
               rowKey="id"
               pagination={{ pageSize: 10 }}
-              onRowClick={this.rowSelected} />
+              onRowClick={this.rowSelected}
+              rowClassName={this.rowClassName} />
           </Side>
           <Body>
             {this.renderForm()}

@@ -19,15 +19,15 @@ namespace Core.React.Models
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
             string validValues = null;
+            string checkValue = value == null ? "" : value.ToString();
             foreach (string word in _words)
             {
-                if (value.ToString() == word)
+                if (checkValue == word)
                 {
                     return ValidationResult.Success;
                 }
-                validValues = validValues == null ? value.ToString() : ", " + value.ToString();
+                validValues += validValues == null ? word : ", " + word;
             }
-
             return new ValidationResult("Value must be any of [" + validValues + "]");
         }
     }

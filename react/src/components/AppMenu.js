@@ -33,20 +33,20 @@ class AppMenu extends Component {
         theme="dark"
       >
         <Menu.Item key="home">
-          <Link to="/"><Icon type="mail" />Home</Link>
+          <Link to="/"><Icon type="home" />Home</Link>
         </Menu.Item>
-        <SubMenu title={<span><Icon type="setting" />Administration</span>}>
+        <SubMenu title={<span><Icon type="caret-down" />Administration</span>}>
           <Menu.Item key="user"><Link to="/users">Users</Link></Menu.Item>
           <Menu.Item key="user-defined-attributes"><Link to="/employees">User Defined Attributes</Link></Menu.Item>
           <Menu.Item key="evaluators">Evaluators</Menu.Item>
           <Menu.Item key="data-writers">Data Writers</Menu.Item>
           <Menu.Item key="settings">Settings</Menu.Item>
         </SubMenu>
-        <SubMenu title={<span><Icon type="setting" />Company</span>}>
+        <SubMenu title={<span><Icon type="caret-down" />Company</span>}>
           <Menu.Item key="asset">Asset Maintenance</Menu.Item>
           <Menu.Item key="project">Project Maintenance</Menu.Item>
         </SubMenu>
-        <SubMenu title={<span><Icon type="setting" />Library</span>}>
+        <SubMenu title={<span><Icon type="caret-down" />Library</span>}>
           <Menu.Item key="library">Library Maintenance</Menu.Item>
           <Menu.Item key="discipline">Discipline Maintenance</Menu.Item>
           <Menu.Item key="class">Class Maintenance</Menu.Item>
@@ -56,7 +56,7 @@ class AppMenu extends Component {
           <Menu.Item key="enumerated-list">Enumerated List Maintenance</Menu.Item>
           <Menu.Item key="data-type">Data Type Maintenance</Menu.Item>
         </SubMenu>
-        <SubMenu title={<span><Icon type="setting" />Authoring</span>}>
+        <SubMenu title={<span><Icon type="caret-down" />Authoring</span>}>
           <Menu.Item key="application">Application Maintenance</Menu.Item>
           <Menu.Item key="mappings">Mappings</Menu.Item>
           <Menu.Item key="authoring-matrix">Authoring Matrix</Menu.Item>

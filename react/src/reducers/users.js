@@ -1,6 +1,6 @@
 import { FETCH_USER, FETCH_USERS, CREATE_USER, DELETE_USER, NEW_USER, UPDATE_USER } from '../actions/users';
 
-const DEFAULT_USER = { id: 0, name: "", osuser: "", email: ""};
+const DEFAULT_USER = { id: 0, name: "", osUser: "", email: ""};
 const INITIAL_STATE = { all: [], user: DEFAULT_USER};
 
 export default function(state = INITIAL_STATE, action) {
@@ -12,12 +12,20 @@ export default function(state = INITIAL_STATE, action) {
     case FETCH_USER:
       return { ...state, user: action.payload.data };
     case CREATE_USER:
-      return { 
-        ...state,
-        all: [ ...state.all, action.payload.data ],
-        user: action.payload.data 
-      };
+      console.log('CREATE_USER Reducer', action)
+      if (action.error) {
+        return { ...state,
+          error: action.error
+        }
+      } else {
+        return { 
+          ...state,
+          all: [ ...state.all, action.payload.data ],
+          user: action.payload.data,
+        }
+      }
     case UPDATE_USER:
+      console.log('UPDATE_USER Reducer', action)  
       return { 
         ...state,
         all: state.all.map(user => user.id === action.payload.data.id ?
@@ -27,7 +35,7 @@ export default function(state = INITIAL_STATE, action) {
           user
         ),
         user: action.payload.data 
-      };
+      }
     case DELETE_USER:
       return { 
         ...state,

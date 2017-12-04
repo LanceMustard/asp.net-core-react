@@ -1,12 +1,14 @@
-import axios from 'axios';
+import axios from 'axios'
+import { message } from 'antd'
+
 import { ROOT_URL } from './environment'
 
-export const FETCH_USER = 'FETCH_USER';
-export const CREATE_USER = 'CREATE_USER';
-export const UPDATE_USER = 'UPDATE_USER';
-export const FETCH_USERS = 'FETCH_USERS';
-export const DELETE_USER = 'DELETE_USER';
-export const NEW_USER = 'NEW_USER';
+export const FETCH_USER = 'FETCH_USER'
+export const CREATE_USER = 'CREATE_USER'
+export const UPDATE_USER = 'UPDATE_USER'
+export const FETCH_USERS = 'FETCH_USERS'
+export const DELETE_USER = 'DELETE_USER'
+export const NEW_USER = 'NEW_USER'
 
 // const ROOT_URL = 'http://localhost:53579/';
 const USERS_API = 'api/Users';

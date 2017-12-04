@@ -9,6 +9,7 @@ import Login from './Login'
 import Home from './Home'
 import Employees from './administration/Employees'
 import Users from './administration/Users'
+import { saveUser, loadUser } from './../localStorage'
 
 const FullScreen = styled.div`
   height: 100vh;
@@ -17,16 +18,15 @@ const FullScreen = styled.div`
 
 class App extends Component {
   state = {
-    // breadcrumb: [ 'Home' ],
-    user: null
+    user: loadUser()  // bit of a crude way of persiting user state, probably should manage this is Redux
   }
   loginUser(values) {
-    this.setState({
-      user: {
-        name: values.userName,
-        password: values.password
-      }
-    })
+    let user = {
+      name: values.userName,
+      password: values.password
+    }
+    this.setState({user})
+    saveUser(user)
   }
   renderLogin() {
     return (
@@ -53,7 +53,7 @@ class App extends Component {
   }
   render() {
     let appContent = null;
-    if (this.state.user === null) appContent = this.renderLogin();
+    if (this.state.user === null || this.state.user === undefined) appContent = this.renderLogin();
     else appContent = this.renderApplication();
     return (
       <Router>

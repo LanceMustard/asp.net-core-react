@@ -8,33 +8,15 @@ import {
 } from 'redux-form-antd'
 import {
   Table,
-  Icon,
-  Popconfirm,
-  Tooltip,
-  Layout,
   Form,
-  Input,
-  Cascader,
-  Select,
-  Row,
-  Col,
-  Checkbox,
-  Button,
-  AutoComplete,
   message
 } from 'antd'
-import { fetchProject, fetchProjects, createProject, deleteProject, newProject, updateProject } from '../../actions/projects';
-import TableButton from './../../components/TableButton.js'
+import { fetchUser, fetchUsers, createUser, deleteUser, newUser, updateUser } from '../../actions/users';
 import { Header, Wrapper, Side, Body } from '../../components/Layout'
 import FormToolbar, { handleFormSubmit, required, email } from '../../components/FormHelper'
-const { Content, Sider } = Layout;
-const FormItem = Form.Item;
-const Option = Select.Option;
-const AutoCompleteOption = AutoComplete.Option;
 
-// const SelectedRow =  {background: 'green'};
 
-class Projects extends Component {
+class Users extends Component {
   constructor(props) {
     super(props);
     this.rowSelected = this.rowSelected.bind(this)
@@ -45,12 +27,23 @@ class Projects extends Component {
         dataIndex: 'name',
         key: 'name',
         sorter: (a, b) => a.name.length - b.name.length,
+      }, {
+        title: 'Role',
+        dataIndex: 'role',
+        key: 'role',
+        filters: [
+          { text: 'Admin', value: 'Admin' },
+          { text: 'User', value: 'User' },
+          { text: 'Read Only', value: 'Read Only' }
+        ],
+        onFilter: (value, record) => record.role.indexOf(value) === 0,
+        sorter: (a, b) => a.role.length - b.role.length
       }
     ];
   }
 
   componentWillMount() {
-    this.props.fetchProjects()
+    this.props.fetchUsers()
   }
 
   rowSelected(record, index, event) {
@@ -58,9 +51,12 @@ class Projects extends Component {
     {
       console.log(this)
       console.log(this.props.onSelectRecord)
-      this.props.fetchProject(record.id)
+      // this.props.onSelectRecord(record.id)
+      // const { onSelectRecord} = this.props
+      // onSelectRecord(record.id)
+      this.props.fetchUser(record.id)
     } else {
-      if (record.id !== this.props.projects.project.id) {
+      if (record.id !== this.props.users.user.id) {
         message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
       }
     }
@@ -76,35 +72,56 @@ class Projects extends Component {
           reset={reset}
           submitting={submitting}
           onSubmit={handleFormSubmit}
-          newRecord={this.props.newProject}
-          createRecord={this.props.createProject}
-          updateRecord={this.props.updateProject}
-          deleteRecord={this.props.deleteProject}
+          newRecord={this.props.newUser}
+          createRecord={this.props.createUser}
+          updateRecord={this.props.updateUser}
+          deleteRecord={this.props.deleteUser}
           />
         <Field 
-          label="Project name" 
+          label="User name" 
           name="name" 
           component={TextField} 
           validate={[ required ]} />
+        <Field 
+          label="Operating system user" 
+          name="osUser" 
+          component={TextField} 
+          validate={[ required ]}/>
+        <Field 
+          label="Email address" 
+          name="email" 
+          component={TextField} 
+          validate={[ email, required ]}/>
+        <Field 
+          label="Role" 
+          name="role" 
+          component={SelectField} 
+          options={[
+            {"label": "Administrtor", "value": "Admin"},
+            {"label": "User", "value": "User"},
+            {"label": "Read Only", "value": "Read Only"}
+          ]}/>
       </Form>
     )
   }
 
   rowClassName(record, index) {
-    return record.id === this.props.projects.project.id ? 'SelectedRow'  : null;
+    // console.log('rowClassName', record)
+    // console.log('rowClassName', index)
+    return record.id === this.props.users.user.id ? 'SelectedRow'  : null;
   }
 
   render() {
     return (
       <div>
         <Header>
-          <h1>Project Maintenance</h1>
+          <h1>User Maintenance</h1>
         </Header>
         <Wrapper>
           <Side>
             <Table
               columns={this.columns}
-              dataSource={this.props.projects.all}
+              dataSource={this.props.users.all}
               rowKey="id"
               pagination={{ pageSize: 10 }}
               onRowClick={this.rowSelected}
@@ -119,27 +136,27 @@ class Projects extends Component {
   }
 }
 
-Projects = reduxForm({
-  form: 'projectForm',
+Users = reduxForm({
+  form: 'userForm',
   enableReinitialize: true,
-  onSelectRecord: fetchProject
-})(Projects);
+  onSelectRecord: fetchUser
+})(Users);
 
-Projects = connect(
+Users = connect(
   state => ({
-    initialValues: state.projects.project
+    initialValues: state.users.user
   })
-)(Projects)
+)(Users)
 
-function mapStateToProps({ projects }) {
-  return { projects }
+function mapStateToProps({ users }) {
+  return { users }
 }
 
 export default connect(mapStateToProps,
-  { fetchProject,
-    fetchProjects,
-    createProject,
-    deleteProject,
-    newProject,
-    updateProject
-   })(Projects)
+  { fetchUser,
+    fetchUsers,
+    createUser,
+    deleteUser,
+    newUser,
+    updateUser
+   })(Users)

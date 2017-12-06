@@ -10,11 +10,17 @@ namespace Core.React.Testing
     {
         static public void BuildDataset(ApplicationContext context)
         {
+            // Admin
             if (context.Users.Count() == 0) AddUsers(context);
+            if (context.Roles.Count() == 0) AddRoles(context);
+            if (context.Permissions.Count() == 0) AddPermissions(context);
+            // Supplier portal
+            if (context.Clients.Count() == 0) AddClients(context);
             if (context.Projects.Count() == 0) AddProjects(context);
-            if (context.Employees.Count() == 0) AddEmployees(context);
             if (context.Suppliers.Count() == 0) AddSuppliers(context);
             if (context.Orders.Count() == 0) AddOrders(context);
+            // Testing 
+            if (context.Employees.Count() == 0) AddEmployees(context);
         }
 
         static private void AddUsers(ApplicationContext context)
@@ -33,6 +39,53 @@ namespace Core.React.Testing
                         Role = role
                     });
             }
+            context.SaveChanges();
+        }
+
+        static private void AddRoles(ApplicationContext context)
+        {
+            context.Roles.Add(new Role
+            {
+                Name = "Admin",
+            });
+            context.Roles.Add(new Role
+            {
+                Name = "User",
+            });
+            context.Roles.Add(new Role
+            {
+                Name = "Read Only",
+            });
+            context.SaveChanges();
+        }
+
+        static private void AddPermissions(ApplicationContext context)
+        {
+            context.Permissions.Add(new Permission
+            {
+                Description = "Login",
+                Group = "General"
+            });
+            context.Permissions.Add(new Permission
+            {
+                Description = "Create Suppliers",
+                Group = "Suppliers"
+            });
+            context.Permissions.Add(new Permission
+            {
+                Description = "Update Suppliers",
+                Group = "Suppliers"
+            });
+            context.Permissions.Add(new Permission
+            {
+                Description = "Delete Suppliers",
+                Group = "Suppliers"
+            });
+            context.Permissions.Add(new Permission
+            {
+                Description = "View Suppliers",
+                Group = "Suppliers"
+            });
             context.SaveChanges();
         }
 
@@ -139,47 +192,60 @@ namespace Core.React.Testing
             context.SaveChanges();
         }
 
-        static private void AddProjects(ApplicationContext context)
+        static private void AddClients(ApplicationContext context)
         {
-            context.Projects.Add(new Project
+            context.Clients.Add(new Client
             {
                 Name = "RIO Tinto",
             });
-            context.Projects.Add(new Project
+            context.Clients.Add(new Client
             {
                 Name = "Woodside",
             });
             context.SaveChanges();
         }
 
+        static private void AddProjects(ApplicationContext context)
+        {
+            context.Projects.Add(new Project
+            {
+                Name = "Koodiedari",
+            });
+            context.Projects.Add(new Project
+            {
+                Name = "KLE",
+            });
+            context.SaveChanges();
+        }
+
         static private void AddOrders(ApplicationContext context)
         {
-            Project rio = context.Projects.FirstOrDefault(x => x.Name == "RIO Tinto");
-            Project woodside = context.Projects.FirstOrDefault(x => x.Name == "Woodside");
+            Project koodiedari = context.Projects.FirstOrDefault(x => x.Name == "Koodiedari");
+            Project kle = context.Projects.FirstOrDefault(x => x.Name == "KLE");
             Supplier blackwoods = context.Suppliers.FirstOrDefault(x => x.Name == "Blackwoods");
             Supplier siemens = context.Suppliers.FirstOrDefault(x => x.Name == "Siemens");
             context.Orders.Add(new Order
             {
                 Description = "Valves",
-                Project = rio,
+                Project = koodiedari,
                 Supplier = blackwoods,
             });
             context.Orders.Add(new Order
             {
                 Description = "Pumps",
-                Project = rio,
+                Project = koodiedari,
                 Supplier = siemens,
             });
             context.Orders.Add(new Order
             {
                 Description = "Motors",
-                Project = woodside,
+                Project = kle,
                 Supplier = blackwoods,
             });
             context.Orders.Add(new Order
             {
                 Description = "Pipe Fabrication",
-                Project = woodside,
+                Project = kle,
                 Supplier = siemens,
             });
             context.SaveChanges();

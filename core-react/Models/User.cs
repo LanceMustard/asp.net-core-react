@@ -21,4 +21,24 @@ namespace Core.React.Models
         [CheckIn(new string[] { "Admin", "User", "Read Only" })]
         public string Role { get; set; }
     }
+
+    public class Permission
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+        [Required(ErrorMessage = "A description is required")]
+        public string Description { get; set; }
+        [Required(ErrorMessage = "A group is required")]
+        public string Group { get; set; }
+    }
+
+    public class Role
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+        [Required(ErrorMessage = "A role name is required")]
+        public string Name { get; set; }
+    }
 }

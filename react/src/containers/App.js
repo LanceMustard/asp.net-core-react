@@ -7,10 +7,15 @@ import AppFooter from './../components/AppFooter'
 // import AppBreadcrumb from './../components/AppBreadcrumb'
 import Login from './Login'
 import Home from './Home'
-import Employees from './administration/Employees'
-import Users from './administration/Users'
-import Projects from './doccon/Projects'
+// import Employees from './administration/Employees'
+// import Users from './administration/Users'
+// import Projects from './doccon/Projects'
+import Users from './users/Users'
 import Suppliers from './suppliers/Suppliers'
+import Projects from './projects/Projects'
+import Clients from './clients/Clients'
+import Roles from './roles/Roles'
+import Permissions from './permissions/Permissions'
 import { saveUser, loadUser } from './../localStorage'
 
 const FullScreen = styled.div`
@@ -44,10 +49,12 @@ class App extends Component {
         <Affix>
           <AppMenu user={this.state.user} />
           <Route exact path="/" component={Home}/>
-          <Route path="/employees" component={Employees}/>
           <Route path="/users" component={Users}/>
+          <Route path="/roles" component={Roles}/>
+          <Route path="/permissions" component={Permissions}/>
           <Route path="/projects" component={Projects}/>
           <Route path="/suppliers" component={Suppliers}/>
+          <Route path="/clients" component={Clients}/>
         </Affix>
         <Affix offsetBottom={0}>
           <AppFooter />

@@ -17,16 +17,16 @@ import FormToolbar, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
 import {
-  fetchSuppliers,
-  fetchSupplier,
-  createSupplier,
-  updateSupplier,
-  deleteSupplier
+  fetchClients,
+  fetchClient,
+  createClient,
+  updateClient,
+  deleteClient
 } from './api'
 
 const FormItem = Form.Item;
 
-class Suppliers extends Component {
+class Clients extends Component {
   constructor(props) {
     super(props);
     this.rowSelected = this.rowSelected.bind(this)
@@ -42,24 +42,24 @@ class Suppliers extends Component {
   }
 
   state = {
-    suppliers: [],
-    supplier: {}
+    clients: [],
+    client: {}
   }
 
   componentWillMount() {
-    fetchSuppliers()
-      .then(res => this.setState({ suppliers: res.data }) )
+    fetchClients()
+      .then(res => this.setState({ clients: res.data }) )
       .catch(err => message.error(err))
   }
 
   rowSelected(record, index, event) {
     if (!this.props.form.isFieldsTouched(['name']))
     {
-      fetchSupplier(record.id)
-        .then(res => this.setState({ supplier: res.data }) )
+      fetchClient(record.id)
+        .then(res => this.setState({ client: res.data }) )
         .catch(err => message.error(err))
     } else {
-      if (record.id !== this.state.supplier.id) {
+      if (record.id !== this.state.client.id) {
         message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
       }
     }
@@ -68,22 +68,22 @@ class Suppliers extends Component {
   handleSubmit(data, fields, mode) {
     if (mode === 'update') {
       this.setState({
-          supplier: data, 
-          suppliers: this.state.suppliers.map(s => s.id === data.id ? data : s)
+          client: data, 
+          clients: this.state.clients.map(s => s.id === data.id ? data : s)
         })
     } else if (mode === 'insert'){
       this.setState({
-        supplier: data, 
-        suppliers: [ ...this.state.suppliers, data ]
+        client: data, 
+        clients: [ ...this.state.clients, data ]
       })
     } else if (mode === 'delete') {
       this.setState({
-        supplier: {},
-        suppliers: this.state.suppliers.filter(x => x.id !== data.id),
+        client: {},
+        clients: this.state.clients.filter(x => x.id !== data.id),
       })
       
     } else if (mode === 'new') {
-      this.setState({supplier: {}})
+      this.setState({client: {}})
     }
   }
 
@@ -94,22 +94,22 @@ class Suppliers extends Component {
       <div>
         <FormToolbar 
           onSubmit={this.handleSubmit.bind(this)}
-          onDelete={deleteSupplier}
-          onInsert={createSupplier}
-          onUpdate={updateSupplier}
+          onDelete={deleteClient}
+          onInsert={createClient}
+          onUpdate={updateClient}
           /* onNew={this.handleNew.bind(this)} */
           form={this.props.form}
-          record={this.state.supplier}
+          record={this.state.client}
           fields={['name']}/>
         <Form onSubmit={this.handleSubmit.bind(this)}>
           <FormItem
             {...defaultFormItemLayout}
             label="Name:">
             {getFieldDecorator('name', {
-              initialValue: this.state.supplier.name,
+              initialValue: this.state.client.name,
               rules: [{ 
                 required: true, 
-                message: 'Please input a supplier name!', 
+                message: 'Please input a client name!', 
                 whitespace: true }],
             })(
               <Input />
@@ -121,20 +121,20 @@ class Suppliers extends Component {
   }
 
   rowClassName(record, index) {
-    return record.id === this.state.supplier.id ? 'SelectedRow'  : null;
+    return record.id === this.state.client.id ? 'SelectedRow'  : null;
   }
 
   render() {
     return (
       <div>
         <Header>
-          <h1>Supplier Maintenance</h1>
+          <h1>Client Maintenance</h1>
         </Header>
         <Wrapper>
           <Side>
             <Table
               columns={this.columns}
-              dataSource={this.state.suppliers}
+              dataSource={this.state.clients}
               rowKey="id"
               pagination={{ pageSize: 10 }}
               onRowClick={this.rowSelected}
@@ -149,5 +149,5 @@ class Suppliers extends Component {
   }
 }
 
-Suppliers = Form.create()(Suppliers);
-export default Suppliers
+Clients = Form.create()(Clients);
+export default Clients

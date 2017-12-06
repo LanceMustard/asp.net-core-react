@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 import styled from 'styled-components';
 
 const SubMenu = Menu.SubMenu;
+const MenuItemGroup = Menu.ItemGroup;
+
 const AppSettings = styled.div`
   float: right;
   margin-right: 20px;
@@ -36,14 +38,18 @@ class AppMenu extends Component {
           <Link to="/"><Icon type="home" />Home</Link>
         </Menu.Item>
         <SubMenu title={<span><Icon type="caret-down" />Administration</span>}>
-          <Menu.Item key="user"><Link to="/users">Users</Link></Menu.Item>
+          <MenuItemGroup key="security" title="Security">
+            <Menu.Item key="user"><Link to="/users">Users</Link></Menu.Item>
+            <Menu.Item key="user"><Link to="/roles">Roles</Link></Menu.Item>
+            <Menu.Item key="user"><Link to="/permissions">Permissions</Link></Menu.Item>
+          </MenuItemGroup>
           <Menu.Item key="user-defined-attributes"><Link to="/employees">User Defined Attributes</Link></Menu.Item>
           <Menu.Item key="evaluators">Evaluators</Menu.Item>
           <Menu.Item key="data-writers">Data Writers</Menu.Item>
           <Menu.Item key="settings">Settings</Menu.Item>
         </SubMenu>
         <SubMenu title={<span><Icon type="caret-down" />Supplier Portal</span>}>
-          <Menu.Item key="client">Client Maintenace</Menu.Item>
+          <Menu.Item key="client"><Link to="/clients">Client Maintenace</Link></Menu.Item>
           <Menu.Item key="project"><Link to="/projects">Project Maintenance</Link></Menu.Item>
           <Menu.Item key="supplier"><Link to="/suppliers">Supplier Maintenance</Link></Menu.Item>
           <Menu.Item key="order"><Link to="/orders">Order Maintenance</Link></Menu.Item>

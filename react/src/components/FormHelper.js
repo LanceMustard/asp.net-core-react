@@ -1,103 +1,175 @@
 import React, { Component } from 'react'
-import { Icon, Button, Popconfirm, message } from 'antd'
+import { Icon, Button, message } from 'antd'
 import styled  from 'styled-components'
+import confirm from './confirm'
 
 /*-----------------------------------------------------------------------------
-  FormItem validations
+  to replace FormHelper, for us with antd Forms
 -----------------------------------------------------------------------------*/
 
-export const required = value => value ? undefined : 'This is a required value'
-export const email = (value) => {
-  var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  return value && !re.test(value) ? 'Please enter a valid email address?' : undefined
-}
+export const defaultFormItemLayout = {
+  labelCol: {
+    xs: { span: 16 },
+    sm: { span: 8 },
+  },
+  wrapperCol: {
+    xs: { span: 24 },
+    sm: { span: 16 },
+  },
+};
 
-/*-----------------------------------------------------------------------------
-  Toolbar button events
------------------------------------------------------------------------------*/
-
-export const handleFormSubmit = (values, form) => {
-  if (values.mode === 'delete') {
-    const hide = message.loading('Deleting record..', 0);
-    form.props.deleteRecord(values.id)
-    .then((data) => {
-      hide()
-      message.success('User deleted')
-    })
-  } else if (values.mode === 'new') {
-    form.props.newRecord();
-  } else {
-    if (values.id === 0) {
-      const hide = message.loading('Creating new record..', 0);
-      form.props.createRecord(values)
-      .then((data) => { 
-        hide()
-        if (data.error) {
-          console.log(data.payload)
-          message.error(`Error creating record [${data.payload.message}]`)  
-        } else
-        {
-          message.success('Save complete')
-        }
-      })
-      .catch((err) => {
-        hide()
-        message.error(`Error creating record [${err}]`)
-      })
-    } else {
-      const hide = message.loading('Updating record..', 0);
-      form.props.updateRecord(values)
-      .then(() => { 
-        hide()
-        message.success('Save complete')
-      })
-    }
-  }
-}
-
-/*-----------------------------------------------------------------------------
-  Components
------------------------------------------------------------------------------*/
-
-export const Wrapper = styled.div`
+export const Toolbar = styled.div`
   display: flex;
   width: 100%;
   justify-content: space-between;
+  padding-bottom: 20px;
 `
 
 class FormToolbar extends Component {
+
+  _changesExist() {
+    return this.props.form.isFieldsTouched(this.props.fields)
+  }
+
+  _handleSave = (e) => {
+    e.preventDefault()
+    this.props.form.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        const { form, onSubmit, fields } = this.props
+        if (onSubmit) {
+          const hide = message.loading('Saving record..', 0);
+          let record = Object.assign(this.props.record, values)
+          let update = false
+          let apiCall= undefined
+          if (record.id) {
+            update = true
+            apiCall= this.props.onUpdate
+          } else {
+            update = false
+            apiCall = this.props.onInsert
+          }
+          (
+            new Promise(function (resolve, reject) {
+              if (apiCall) {
+                apiCall(record)
+                  .then(res => {
+                    resolve({
+                      data: res.data, 
+                      update
+                    })
+                  })
+                  .catch(err => {
+                    reject(err.message)
+                  })
+              } else {
+                reject(`No ${update ? 'update' : 'insert'} method defined`)
+              }
+            })
+          )
+            .then((res) => {
+              onSubmit(res.data, fields, res.update ? 'update' : 'insert')
+              form.resetFields(fields)
+              hide()
+              message.success('Save complete')
+            })
+            .catch(err => {
+              hide()
+              message.error(err)
+              return
+            })
+        }
+      } else {
+        message.error(err)
+        return
+      }
+    })
+  }
+
+  _handleReset = () => {
+    this.props.form.resetFields(this.props.fields)
+    if (this.props.onReset) this.props.onReset(this.props.fields)
+  }
+
+  _handleDelete = () => {
+    let confirmMessage = this.props.deleteMessage || 'Please confirm that you want to delete this record'
+    const { onDelete, onSubmit, record, fields } = this.props
+    confirm(confirmMessage, { title: "Delete confirmation" }).then(
+      (ok) => {
+        if (onDelete) {
+          const hide = message.loading('Deleting record..', 0);
+          (
+            new Promise(function (resolve, reject) {
+              onDelete(record.id)
+                .then(res => {
+                  resolve({
+                    data: res.data, 
+                  })
+                })
+                .catch(err => {
+                  reject(err)
+                })
+            })
+          )
+          .then((res) => {
+            onSubmit(res.data, fields, 'delete')
+            hide()
+            message.success('Delete complete')
+          })
+          .catch(err => {
+            hide()
+            message.error(err)
+            return
+          })
+        } else {
+          message.error('No delete method defined')
+        }
+      },
+      (cancel) => { /* do nothing */ }
+    )
+  }
+
+  _handleNew = () => {
+    if (this._changesExist()) {
+      let confirmMessage = this.props.newMessage || 'Changes will be lost, please confirm before proceeding'
+      confirm(confirmMessage).then(
+        (ok) => {
+          this._handleReset()
+          if (this.props.onNew) this.props.onNew(this.props.fields)
+          this.props.onSubmit(undefined, this.props.fields, 'new')
+        },
+        (cancel) => { /* do nothing */ }
+      )
+    } else {
+      if (this.props.onNew) this.props.onNew(this.props.fields)
+      this.props.onSubmit(undefined, this.props.fields, 'new')
+    }
+  }
+
   render() {
-    const { handleSubmit, pristine, reset, submitting, onSubmit } = this.props
-    return  (
-      <Wrapper>
+    return (
+      <Toolbar>
         <Button 
-          type="button" 
-          disabled={submitting} 
-          onClick={handleSubmit(values => onSubmit({...values, mode: 'new'}, this))}>
+          type="button"
+          onClick={this._handleNew}>
           <Icon type="file-add"/>New
         </Button>
         <Button 
-          type="button" 
-          disabled={pristine || submitting} 
-          onClick={handleSubmit(values => onSubmit({...values, mode: 'save'}, this))}>
+          type="button"
+          htmlType="submit"
+          onClick={this._handleSave} >
           <Icon type="save"/>Save
         </Button>
         <Button 
-          type="button" 
-          disabled={pristine || submitting} 
-          onClick={reset}>
-          <Icon type="retweet"/>Clear
+          type="button"
+          onClick={this._handleReset}>
+          <Icon type="retweet" />Clear
         </Button>
-        <Popconfirm 
-          title="Confirm delete?" 
-          onConfirm={handleSubmit(values => onSubmit({...values, mode: 'delete'}, this))}>
-          <Button 
-            type="button" 
-            disabled={submitting}>
-            <Icon type="delete"/>Delete
-          </Button>
-        </Popconfirm>
-      </Wrapper>
+        <Button 
+          type="button"
+          onClick={this._handleDelete} >
+          <Icon type="delete"/>Delete
+        </Button>
+      </Toolbar>
     )
   }
 }

@@ -17,16 +17,16 @@ import FormToolbar, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
 import {
-  fetchSuppliers,
-  fetchSupplier,
-  createSupplier,
-  updateSupplier,
-  deleteSupplier
+  fetchRoles,
+  fetchRole,
+  createRole,
+  updateRole,
+  deleteRole
 } from './api'
 
 const FormItem = Form.Item;
 
-class Suppliers extends Component {
+class Roles extends Component {
   constructor(props) {
     super(props);
     this.rowSelected = this.rowSelected.bind(this)
@@ -42,24 +42,24 @@ class Suppliers extends Component {
   }
 
   state = {
-    suppliers: [],
-    supplier: {}
+    roles: [],
+    role: {}
   }
 
   componentWillMount() {
-    fetchSuppliers()
-      .then(res => this.setState({ suppliers: res.data }) )
+    fetchRoles()
+      .then(res => this.setState({ roles: res.data }) )
       .catch(err => message.error(err))
   }
 
   rowSelected(record, index, event) {
     if (!this.props.form.isFieldsTouched(['name']))
     {
-      fetchSupplier(record.id)
-        .then(res => this.setState({ supplier: res.data }) )
+      fetchRole(record.id)
+        .then(res => this.setState({ role: res.data }) )
         .catch(err => message.error(err))
     } else {
-      if (record.id !== this.state.supplier.id) {
+      if (record.id !== this.state.role.id) {
         message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
       }
     }
@@ -68,22 +68,22 @@ class Suppliers extends Component {
   handleSubmit(data, fields, mode) {
     if (mode === 'update') {
       this.setState({
-          supplier: data, 
-          suppliers: this.state.suppliers.map(s => s.id === data.id ? data : s)
+          role: data, 
+          roles: this.state.roles.map(s => s.id === data.id ? data : s)
         })
     } else if (mode === 'insert'){
       this.setState({
-        supplier: data, 
-        suppliers: [ ...this.state.suppliers, data ]
+        role: data, 
+        roles: [ ...this.state.roles, data ]
       })
     } else if (mode === 'delete') {
       this.setState({
-        supplier: {},
-        suppliers: this.state.suppliers.filter(x => x.id !== data.id),
+        role: {},
+        roles: this.state.roles.filter(x => x.id !== data.id),
       })
       
     } else if (mode === 'new') {
-      this.setState({supplier: {}})
+      this.setState({role: {}})
     }
   }
 
@@ -94,22 +94,22 @@ class Suppliers extends Component {
       <div>
         <FormToolbar 
           onSubmit={this.handleSubmit.bind(this)}
-          onDelete={deleteSupplier}
-          onInsert={createSupplier}
-          onUpdate={updateSupplier}
+          onDelete={deleteRole}
+          onInsert={createRole}
+          onUpdate={updateRole}
           /* onNew={this.handleNew.bind(this)} */
           form={this.props.form}
-          record={this.state.supplier}
+          record={this.state.role}
           fields={['name']}/>
         <Form onSubmit={this.handleSubmit.bind(this)}>
           <FormItem
             {...defaultFormItemLayout}
             label="Name:">
             {getFieldDecorator('name', {
-              initialValue: this.state.supplier.name,
+              initialValue: this.state.role.name,
               rules: [{ 
                 required: true, 
-                message: 'Please input a supplier name!', 
+                message: 'Please input a role name!', 
                 whitespace: true }],
             })(
               <Input />
@@ -121,20 +121,20 @@ class Suppliers extends Component {
   }
 
   rowClassName(record, index) {
-    return record.id === this.state.supplier.id ? 'SelectedRow'  : null;
+    return record.id === this.state.role.id ? 'SelectedRow'  : null;
   }
 
   render() {
     return (
       <div>
         <Header>
-          <h1>Supplier Maintenance</h1>
+          <h1>Role Maintenance</h1>
         </Header>
         <Wrapper>
           <Side>
             <Table
               columns={this.columns}
-              dataSource={this.state.suppliers}
+              dataSource={this.state.roles}
               rowKey="id"
               pagination={{ pageSize: 10 }}
               onRowClick={this.rowSelected}
@@ -149,5 +149,5 @@ class Suppliers extends Component {
   }
 }
 
-Suppliers = Form.create()(Suppliers);
-export default Suppliers
+Roles = Form.create()(Roles);
+export default Roles

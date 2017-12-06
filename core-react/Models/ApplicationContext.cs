@@ -14,8 +14,16 @@ namespace Core.React.Models
         {
         }
 
-        public DbSet<Employee> Employees { get; set; }
+        // Admin
         public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<Permission> Permissions { get; set; }
+
+        // Testing 
+        public DbSet<Employee> Employees { get; set; }
+
+        // Supplier Portal
+        public DbSet<Client> Clients { get; set; }
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<Project> Projects { get; set; }

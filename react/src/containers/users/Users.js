@@ -2,6 +2,7 @@ import React, {
   Component
 } from 'react'
 import {
+  Spin,
   Table,
   Form,
   Input,
@@ -55,14 +56,23 @@ class Users extends Component {
   }
 
   state = {
+    loading: true,
     users: [],
     user: {role: "Read Only"}
   }
 
   componentWillMount() {
     fetchUsers()
-      .then(res => this.setState({ users: res.data }) )
-      .catch(err => message.error(err))
+      .then(res => {
+        this.setState({ 
+          users: res.data,
+          loading: false 
+        }) 
+      })
+      .catch(err => {
+        this.setState({ loading: false }) 
+        message.error(err)
+      })
   }
 
   rowSelected(record, index, event) {
@@ -180,6 +190,20 @@ class Users extends Component {
     )
   }
 
+  renderTable() {
+    return (
+      <Spin tip="Loading..." spinning={this.state.loading}>
+        <Table
+          columns={this.columns}
+          dataSource={this.state.users}
+          rowKey="id"
+          pagination={{ pageSize: 10 }}
+          onRowClick={this.rowSelected}
+          rowClassName={this.rowClassName} />
+      </Spin>
+    )
+  }
+
   rowClassName(record, index) {
     return record.id === this.state.user.id ? 'SelectedRow'  : null;
   }
@@ -192,13 +216,7 @@ class Users extends Component {
         </Header>
         <Wrapper>
           <Side>
-            <Table
-              columns={this.columns}
-              dataSource={this.state.users}
-              rowKey="id"
-              pagination={{ pageSize: 10 }}
-              onRowClick={this.rowSelected}
-              rowClassName={this.rowClassName} />
+            {this.renderTable()}
           </Side>
           <Body>
             {this.renderForm()}

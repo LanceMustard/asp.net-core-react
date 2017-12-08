@@ -5,13 +5,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Cors;
 using Core.React.Models;
 using Core.React.Testing;
 
 namespace core_react.Controllers
 {
-    [EnableCors("CustomCORS")]
     [Produces("application/json")]
     [Route("api/Clients")]
     public class ClientsController : Controller
@@ -126,4 +124,26 @@ namespace core_react.Controllers
             return _context.Clients.Any(e => e.Id == id);
         }
     }
-}
+
+    [Route("api/Client/Projects")]
+    [Produces("application/json")]
+    public class ClientProjectsController : Controller
+    {
+        private readonly ApplicationContext _context;
+
+        public ClientProjectsController(ApplicationContext context)
+        {
+            _context = context;
+            InitializeData.BuildDataset(context);
+        }
+
+        // GET: api/Client/Projects
+        [HttpGet("{id}")]
+        public List<Project> GetProjects([FromRoute] int id)
+        {
+            List<Project> projects = (from p in _context.Projects where p.ClientId == id select p).ToList();
+            return projects;
+        }
+    }
+
+  }

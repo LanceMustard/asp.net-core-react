@@ -14,6 +14,11 @@ export function fetchClient(id) {
   return request
 }
 
+export function fetchClientProjects(id) {
+  const request = axios.get(`${ROOT_URL}api/client/projects/${id}`)
+  return request
+}
+
 export function createClient(props) {
   const request = axios.post(`${ROOT_URL}${API}`, props)
   return request

@@ -30,15 +30,23 @@ namespace Core.React.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Supplier has many Orders
             modelBuilder.Entity<Order>()
                 .HasOne(s => s.Supplier)
                 .WithMany(o => o.Orders)
                 .HasForeignKey(s => s.SupplierId);
 
+            // Project has many Orders
             modelBuilder.Entity<Order>()
                 .HasOne(p => p.Project)
                 .WithMany(o => o.Orders)
                 .HasForeignKey(p => p.ProjectId);
+
+            // Client has many Projects
+            modelBuilder.Entity<Project>()
+                .HasOne(c => c.Client)
+                .WithMany(p => p.Projects)
+                .HasForeignKey(c => c.ClientId);
 
             //    modelBuilder.Entity<Employee>().ToTable("Employee");
             //    modelBuilder.Entity<User>().ToTable("User");

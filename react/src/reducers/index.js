@@ -1,13 +1,11 @@
-import { combineReducers } from 'redux';
-import { reducer as formReducer } from 'redux-form';
-import EmployeesReducer from './employees';
-import UsersReducer from './users';
-import ProjectsReducer from './projects';
+import { combineReducers } from 'redux'
+import { reducer as formReducer } from 'redux-form'
+import UsersReducer from './users'
+import BreadcrumbReducer from './breadcrumbs'
 
 const rootReducer = combineReducers({
-  employees: EmployeesReducer,
   users: UsersReducer,
-  projects: ProjectsReducer,
+  breadcrumbs: BreadcrumbReducer,
   form: formReducer
 });
 

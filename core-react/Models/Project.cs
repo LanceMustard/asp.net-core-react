@@ -14,11 +14,9 @@ namespace Core.React.Models
         public int Id { get; set; }
         [Required(ErrorMessage = "A project name is required")]
         public string Name { get; set; }
+        public int ClientId { get; set; }
+        [ForeignKey("ClientId")]
+        public Client Client { get; set; }
         public ICollection<Order> Orders { get; set; }
-
-        //public Project()
-        //{
-        //    Orders = new List<Order>();
-        //}
     }
 }

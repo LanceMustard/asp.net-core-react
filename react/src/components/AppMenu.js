@@ -56,7 +56,7 @@ class AppMenu extends Component {
         </SubMenu>
         <SubMenu title={<span><Icon type="caret-down" />Company</span>}>
           <Menu.Item key="asset">Asset Maintenance</Menu.Item>
-          <Menu.Item key="project">Project Maintenance</Menu.Item>
+          <Menu.Item key="project2">Project Maintenance</Menu.Item>
         </SubMenu>
         <SubMenu title={<span><Icon type="caret-down" />Library</span>}>
           <Menu.Item key="library">Library Maintenance</Menu.Item>

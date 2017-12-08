@@ -1,6 +1,7 @@
 import React, {
   Component
 } from 'react'
+import { connect } from 'react-redux'
 import {
   Table,
   Form,
@@ -19,10 +20,13 @@ import FormToolbar, {
 import {
   fetchClients,
   fetchClient,
+  fetchClientProjects,
   createClient,
   updateClient,
   deleteClient
 } from './api'
+import BreadcrumbLink from '../../components/BreadcrumbLink'
+import { addBreadcrumb, removeBreadcrumb } from './../../actions/breadcrumbs'
 
 const FormItem = Form.Item;
 
@@ -38,31 +42,69 @@ class Clients extends Component {
         key: 'name',
         sorter: (a, b) => a.name.length - b.name.length,
       }
-    ];
+    ]
+    this.projectColumns = [
+      {
+        title: 'Projects',
+        dataIndex: 'name',
+        key: 'name',
+        sorter: (a, b) => a.name.length - b.name.length,
+      },
+      {
+        key: 'action',
+        render: (text, record) => (
+          <span>
+            <BreadcrumbLink 
+              from={`/clients/${this.state.client.id}`} 
+              to={`/projects/${record.id}`}
+              description={this.state.client.name} 
+              onClick={this.props.addBreadcrumb}/>
+          </span>
+        )
+      }
+    ]
   }
 
   state = {
     clients: [],
-    client: {}
+    client: {},
+    projects: []
   }
 
   componentWillMount() {
+    this.props.removeBreadcrumb(this.props.location.pathname)
+    // load inital record if one is specified in the params
+    if (this.props.match.params.id) this.handleSelect(this.props.match.params.id)
+    // populate client tables
     fetchClients()
-      .then(res => this.setState({ clients: res.data }) )
+      .then(res => this.setState({clients: res.data}))
       .catch(err => message.error(err))
   }
 
   rowSelected(record, index, event) {
     if (!this.props.form.isFieldsTouched(['name']))
     {
-      fetchClient(record.id)
-        .then(res => this.setState({ client: res.data }) )
-        .catch(err => message.error(err))
+      this.handleSelect(record.id)
     } else {
       if (record.id !== this.state.client.id) {
         message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
       }
     }
+  }
+
+  handleSelect(id) {
+    fetchClient(id)
+    .then(res => {
+      var client = res.data
+      fetchClientProjects(id)
+      .then(res => {
+        this.setState({
+           client,
+           projects: res.data 
+          }) 
+      })
+    })
+    .catch(err => message.error(err))
   }
 
   handleSubmit(data, fields, mode) {
@@ -142,6 +184,11 @@ class Clients extends Component {
           </Side>
           <Body>
             {this.renderForm()}
+            <Table
+              columns={this.projectColumns}
+              dataSource={this.state.projects}
+              rowKey="id"
+              pagination={{ pageSize: 10 }}/>
           </Body>
         </Wrapper>
       </div>
@@ -149,5 +196,14 @@ class Clients extends Component {
   }
 }
 
+
+function mapStateToProps(state) {
+  return { breadcrumbs: state.breadcrumbs }
+}
+
 Clients = Form.create()(Clients);
-export default Clients
+
+export default connect(mapStateToProps,
+  { addBreadcrumb,
+    removeBreadcrumb
+   })(Clients)

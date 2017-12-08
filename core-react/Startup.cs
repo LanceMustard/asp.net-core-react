@@ -56,6 +56,7 @@ namespace Core.React
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseCors("CustomCORS");
             }
 
             app.UseMvc();

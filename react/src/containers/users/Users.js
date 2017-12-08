@@ -1,10 +1,12 @@
 import React, {
   Component
 } from 'react'
+import { connect } from 'react-redux'
 import {
   Spin,
   Table,
   Form,
+  Icon,
   Input,
   Select,
   message
@@ -25,9 +27,11 @@ import {
   updateUser,
   deleteUser
 } from './api'
+import { addBreadcrumb, removeBreadcrumb } from './../../actions/breadcrumbs'
 
-const FormItem = Form.Item;
-const Option = Select.Option;
+const FormItem = Form.Item
+const Option = Select.Option
+const Search = Input.Search
 
 class Users extends Component {
   constructor(props) {
@@ -57,11 +61,14 @@ class Users extends Component {
 
   state = {
     loading: true,
+    search: '',
+    filter: null,
     users: [],
     user: {role: "Read Only"}
   }
 
   componentWillMount() {
+    this.updateBreadcrumbs(this.props.location.pathname)
     fetchUsers()
       .then(res => {
         this.setState({ 
@@ -74,6 +81,18 @@ class Users extends Component {
         message.error(err)
       })
   }
+  
+  // updateBreadcrumbs = (path) => {
+  //   let removeRemaining = false
+  //   let links = this.props.breadcrumbs.links
+  //   let removeBreadcrumb = this.props.removeBreadcrumb
+  //   for (var i = 0; i < links.length; i++) {
+  //     if (links[i].path === path) {
+  //       removeBreadcrumb(links[i].uuid)
+  //       removeRemaining = true
+  //     } else if (removeRemaining) removeBreadcrumb(links[i].uuid)
+  //   }
+  // }
 
   rowSelected(record, index, event) {
     if (!this.props.form.isFieldsTouched(['name']))
@@ -92,7 +111,7 @@ class Users extends Component {
     if (mode === 'update') {
       this.setState({
           user: data, 
-          users: this.state.users.map(s => s.id === data.id ? data : s)
+          users: this.state.users.map(user => user.id === data.id ? data : user)
         })
     } else if (mode === 'insert'){
       this.setState({
@@ -195,7 +214,7 @@ class Users extends Component {
       <Spin tip="Loading..." spinning={this.state.loading}>
         <Table
           columns={this.columns}
-          dataSource={this.state.users}
+          dataSource={this.state.filter || this.state.users}
           rowKey="id"
           pagination={{ pageSize: 10 }}
           onRowClick={this.rowSelected}
@@ -208,7 +227,22 @@ class Users extends Component {
     return record.id === this.state.user.id ? 'SelectedRow'  : null;
   }
 
+  onSearch = (e) => {
+    let search = e.target.value
+    const reg = new RegExp(search, 'gi')
+    let filter = this.state.users.filter(user => user.name.match(reg))
+    this.setState({ search, filter })
+  }
+
+  resetSearch = () => {
+    this.setState({
+      search: '',
+      filter: null
+    })
+  }
+
   render() {
+    const suffix = this.state.search ? <Icon type="close-circle" onClick={this.resetSearch} /> : null
     return (
       <div>
         <Header>
@@ -216,6 +250,12 @@ class Users extends Component {
         </Header>
         <Wrapper>
           <Side>
+            <Search
+              prefix={suffix} 
+              placeholder="Search by user name"
+              value={this.state.search}
+              onChange={this.onSearch}
+              onPressEnter={this.onSearch}/>
             {this.renderTable()}
           </Side>
           <Body>
@@ -227,5 +267,13 @@ class Users extends Component {
   }
 }
 
+function mapStateToProps(state) {
+  return { breadcrumbs: state.breadcrumbs }
+}
+
 Users = Form.create()(Users);
-export default Users
+
+export default connect(mapStateToProps,
+  { addBreadcrumb,
+    removeBreadcrumb
+   })(Users)

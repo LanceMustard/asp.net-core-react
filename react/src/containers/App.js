@@ -1,21 +1,21 @@
 import React, { Component } from 'react'
+import { connect } from 'react-redux'
 import { BrowserRouter as Router, Route } from 'react-router-dom'
 import { Affix } from 'antd'
 import styled from 'styled-components'
+import { addBreadcrumb, removeBreadcrumb } from './../actions/breadcrumbs'
 import AppMenu from './../components/AppMenu'
 import AppFooter from './../components/AppFooter'
-// import AppBreadcrumb from './../components/AppBreadcrumb'
+import AppBreadcrumb from './../components/AppBreadcrumb'
 import Login from './Login'
 import Home from './Home'
-// import Employees from './administration/Employees'
-// import Users from './administration/Users'
-// import Projects from './doccon/Projects'
 import Users from './users/Users'
-import Suppliers from './suppliers/Suppliers'
-import Projects from './projects/Projects'
-import Clients from './clients/Clients'
 import Roles from './roles/Roles'
 import Permissions from './permissions/Permissions'
+import Clients from './clients/Clients'
+import Projects from './projects/Projects'
+import Suppliers from './suppliers/Suppliers'
+import Orders from './orders/Orders'
 import { saveUser, loadUser } from './../localStorage'
 
 const FullScreen = styled.div`
@@ -43,18 +43,21 @@ class App extends Component {
       </FullScreen>
     )
   }
+
   renderApplication() {
     return (
       <FullScreen>
         <Affix>
           <AppMenu user={this.state.user} />
+          <AppBreadcrumb data={this.props.breadcrumbs.links}/>
           <Route exact path="/" component={Home}/>
-          <Route path="/users" component={Users}/>
-          <Route path="/roles" component={Roles}/>
+          <Route path="/users/:id?" component={Users}/>
+          <Route path="/roles/:id?" component={Roles}/>
           <Route path="/permissions" component={Permissions}/>
-          <Route path="/projects" component={Projects}/>
-          <Route path="/suppliers" component={Suppliers}/>
-          <Route path="/clients" component={Clients}/>
+          <Route path="/clients/:id?" component={Clients}/>
+          <Route path="/projects/:id?" component={Projects}/>
+          <Route path="/suppliers/:id?" component={Suppliers}/>
+          <Route path="/orders/:id?" component={Orders}/>
         </Affix>
         <Affix offsetBottom={0}>
           <AppFooter />
@@ -73,4 +76,14 @@ class App extends Component {
     )
   }
 }
-export default App
+
+function mapStateToProps(state) {
+  return { breadcrumbs: state.breadcrumbs }
+}
+
+export default connect(mapStateToProps,
+  { addBreadcrumb,
+    removeBreadcrumb
+   })(App)
+
+// export default App

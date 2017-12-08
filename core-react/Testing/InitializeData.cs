@@ -207,33 +207,43 @@ namespace Core.React.Testing
 
         static private void AddProjects(ApplicationContext context)
         {
+            Client rio = context.Clients.FirstOrDefault(x => x.Name == "RIO Tinto");
+            Client wel = context.Clients.FirstOrDefault(x => x.Name == "Woodside");
+
             context.Projects.Add(new Project
             {
-                Name = "Koodiedari",
+                Name = "Koodaideri",
+                Client = rio
             });
             context.Projects.Add(new Project
             {
                 Name = "KLE",
+                Client = wel
+            });
+            context.Projects.Add(new Project
+            {
+                Name = "Pluto",
+                Client = wel
             });
             context.SaveChanges();
         }
 
         static private void AddOrders(ApplicationContext context)
         {
-            Project koodiedari = context.Projects.FirstOrDefault(x => x.Name == "Koodiedari");
+            Project koodaideri = context.Projects.FirstOrDefault(x => x.Name == "Koodaideri");
             Project kle = context.Projects.FirstOrDefault(x => x.Name == "KLE");
             Supplier blackwoods = context.Suppliers.FirstOrDefault(x => x.Name == "Blackwoods");
             Supplier siemens = context.Suppliers.FirstOrDefault(x => x.Name == "Siemens");
             context.Orders.Add(new Order
             {
                 Description = "Valves",
-                Project = koodiedari,
+                Project = koodaideri,
                 Supplier = blackwoods,
             });
             context.Orders.Add(new Order
             {
                 Description = "Pumps",
-                Project = koodiedari,
+                Project = koodaideri,
                 Supplier = siemens,
             });
             context.Orders.Add(new Order

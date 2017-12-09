@@ -40,8 +40,8 @@ class AppMenu extends Component {
         <SubMenu title={<span><Icon type="caret-down" />Administration</span>}>
           <MenuItemGroup key="security" title="Security">
             <Menu.Item key="user"><Link to="/users">Users</Link></Menu.Item>
-            <Menu.Item key="user"><Link to="/roles">Roles</Link></Menu.Item>
-            <Menu.Item key="user"><Link to="/permissions">Permissions</Link></Menu.Item>
+            <Menu.Item key="roles"><Link to="/roles">Roles</Link></Menu.Item>
+            <Menu.Item key="permissions"><Link to="/permissions">Permissions</Link></Menu.Item>
           </MenuItemGroup>
           <Menu.Item key="user-defined-attributes"><Link to="/employees">User Defined Attributes</Link></Menu.Item>
           <Menu.Item key="evaluators">Evaluators</Menu.Item>

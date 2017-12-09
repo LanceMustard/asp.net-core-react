@@ -1,22 +1,17 @@
 import React, {
   Component
 } from 'react'
-import { connect } from 'react-redux'
 import {
-  Table,
   Form,
   Input,
+  Table,
   message
 } from 'antd'
-import {
-  Header,
-  Wrapper,
-  Side,
-  Body
-} from '../../components/Layout'
-import FormToolbar, {
+import FormHelper, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
+import BreadcrumbLink from '../../components/BreadcrumbLink'
+import CRUDHelper from '../../components/CRUDHelper'
 import {
   fetchProjects,
   fetchProject,
@@ -25,16 +20,12 @@ import {
   updateProject,
   deleteProject
 } from './api'
-import BreadcrumbLink from '../../components/BreadcrumbLink'
-import { addBreadcrumb, removeBreadcrumb } from './../../actions/breadcrumbs'
 
 const FormItem = Form.Item;
 
 class Projects extends Component {
   constructor(props) {
     super(props);
-    this.rowSelected = this.rowSelected.bind(this)
-    this.rowClassName = this.rowClassName.bind(this)
     this.columns = [
       {
         title: 'Name',
@@ -57,34 +48,64 @@ class Projects extends Component {
             <BreadcrumbLink 
               from={`/projects/${this.state.project.id}`} 
               to={`/orders/${record.id}`}
-              description={this.state.project.name} 
-              onClick={this.props.addBreadcrumb}/>
+              description={this.state.project.name} />
           </span>
         )
       }
     ]
+    this.fields = ['name']
   }
 
   state = {
     projects: [],
     project: {},
-    orders: []
+    orders: [],
+    tableMessage: 'Loading projects...',
+    formMessage: null,
   }
 
   componentWillMount() {
-    this.props.removeBreadcrumb(this.props.location.pathname)
     // load inital record if one is specified in the params
-    if (this.props.match.params.id) this.handleSelect(this.props.match.params.id)
-    // populate project tables
+    if (this.props.match.params.id) this.selectProject(this.props.match.params.id)
+    // populate client tables
     fetchProjects()
-      .then(res => this.setState({ projects: res.data }) )
-      .catch(err => message.error(err))
+      .then(res => {
+        this.setState({
+          projects: res.data,
+          tableMessage: null
+        })
+      })
+      .catch(err => {
+        this.setState({tableMessage: null})
+        message.error(err)
+      })
   }
 
-  rowSelected(record, index, event) {
-    if (!this.props.form.isFieldsTouched(['name']))
+  selectProject = (id) => {
+    this.setState({formMessage: 'Loading project details...'})
+    fetchProject(id)
+      .then(res => {
+        var project = res.data
+        fetchProjectOrders(id)
+        .then(res => {
+          this.setState({
+            project,
+            orders: res.data,
+            formMessage: null
+          }) 
+        })
+      .catch(err => {
+        this.setState({formMessage: null})
+        message.error(err)
+      })
+    })
+    .catch(err => message.error(err))
+  }
+
+  handleSelect = (record, index, event) => {
+    if (!this.props.form.isFieldsTouched(this.fields))
     {
-      this.handleSelect(record.id)    
+      this.selectProject(record.id)    
     } else {
       if (record.id !== this.state.project.id) {
         message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
@@ -92,24 +113,7 @@ class Projects extends Component {
     }
   }
 
-  handleSelect(id) {
-    fetchProject(id)
-    .then(res => {
-      var project = res.data
-      fetchProjectOrders(id)
-      .then(res => {
-        this.setState({
-          project,
-          orders: res.data 
-        }) 
-      })
-
-      // this.setState({ project: res.data })
-    })
-    .catch(err => message.error(err))
-  }
-
-  handleSubmit(data, fields, mode) {
+  handleSubmit = (data, fields, mode) => {
     if (mode === 'update') {
       this.setState({
           project: data, 
@@ -124,27 +128,33 @@ class Projects extends Component {
       this.setState({
         project: {},
         projects: this.state.projects.filter(x => x.id !== data.id),
+        orders: []
       })
       
     } else if (mode === 'new') {
-      this.setState({project: {}})
+      this.setState({
+        project: {},
+        orders: []
+      })
     }
   }
+
+  handleProgress = (message) => {
+    this.setState({formMessage: message})
+  }
+
 
   renderForm() {
     const { getFieldDecorator } = this.props.form;
 
     return (
-      <div>
-        <FormToolbar 
-          onSubmit={this.handleSubmit.bind(this)}
-          onDelete={deleteProject}
-          onInsert={createProject}
-          onUpdate={updateProject}
-          /* onNew={this.handleNew.bind(this)} */
-          form={this.props.form}
-          record={this.state.project}
-          fields={['name']}/>
+      <FormHelper
+        onSubmit={this.handleSubmit.bind(this)}
+        onDelete={deleteProject}
+        onInsert={createProject}
+        onUpdate={updateProject}
+        onProgress={this.handleProgress}
+        record={this.state.project}>
         <Form onSubmit={this.handleSubmit.bind(this)}>
           <FormItem
             {...defaultFormItemLayout}
@@ -160,51 +170,41 @@ class Projects extends Component {
             )}
           </FormItem>
         </Form>
-      </div>
+      </FormHelper>
     )
   }
 
-  rowClassName(record, index) {
-    return record.id === this.state.project.id ? 'SelectedRow'  : null;
-  }
-
   render() {
+    const navigationTable = {
+      dataSource: this.state.projects,
+      columns: this.columns
+    }
     return (
-      <div>
-        <Header>
-          <h1>Project Maintenance</h1>
-        </Header>
-        <Wrapper>
-          <Side>
-            <Table
-              columns={this.columns}
-              dataSource={this.state.projects}
-              rowKey="id"
-              pagination={{ pageSize: 10 }}
-              onRowClick={this.rowSelected}
-              rowClassName={this.rowClassName} />
-          </Side>
-          <Body>
-            {this.renderForm()}
-            <Table
-              columns={this.orderColumns}
-              dataSource={this.state.orders}
-              rowKey="id"
-              pagination={{ pageSize: 10 }}/>
-          </Body>
-        </Wrapper>
-      </div>
+      <CRUDHelper 
+        form={this.props.form}
+        header="Project Maintenance"
+        fields={this.fields}
+        rowKey="id"
+        searchText="Search by project name..."
+        path={this.props.location.pathname}
+        currentRecord={this.state.project}
+        navigationTable={navigationTable}
+        sideMessage={this.state.tableMessage}
+        bodyMessage={this.state.formMessage}
+        search={this.state.search}
+        filter={this.state.filter}
+        onSelect={this.handleSelect}>
+        {this.renderForm()}
+        <Table
+            columns={this.orderColumns}
+            dataSource={this.state.orders}
+            rowKey="id"
+            pagination={{ pageSize: 10 }}/>
+      </CRUDHelper>
     );
   }
 }
 
-function mapStateToProps(state) {
-  return { breadcrumbs: state.breadcrumbs }
-}
+Projects = Form.create()(Projects)
 
-Projects = Form.create()(Projects);
-
-export default connect(mapStateToProps,
-  { addBreadcrumb,
-    removeBreadcrumb
-   })(Projects)
+export default Projects

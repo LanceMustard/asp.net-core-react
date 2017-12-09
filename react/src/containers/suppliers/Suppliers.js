@@ -2,23 +2,20 @@ import React, {
   Component
 } from 'react'
 import {
-  Table,
   Form,
   Input,
+  Table,
   message
 } from 'antd'
-import {
-  Header,
-  Wrapper,
-  Side,
-  Body
-} from '../../components/Layout'
-import FormToolbar, {
+import FormHelper, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
+import BreadcrumbLink from '../../components/BreadcrumbLink'
+import CRUDHelper from '../../components/CRUDHelper'
 import {
   fetchSuppliers,
   fetchSupplier,
+  fetchSupplierOrders,
   createSupplier,
   updateSupplier,
   deleteSupplier
@@ -29,8 +26,6 @@ const FormItem = Form.Item;
 class Suppliers extends Component {
   constructor(props) {
     super(props);
-    this.rowSelected = this.rowSelected.bind(this)
-    this.rowClassName = this.rowClassName.bind(this)
     this.columns = [
       {
         title: 'Name',
@@ -38,26 +33,78 @@ class Suppliers extends Component {
         key: 'name',
         sorter: (a, b) => a.name.length - b.name.length,
       }
-    ];
+    ]
+    this.orderColumns = [
+      {
+        title: 'Orders',
+        dataIndex: 'description',
+        key: 'description',
+        sorter: (a, b) => a.description.length - b.description.length,
+      },
+      {
+        key: 'action',
+        render: (text, record) => (
+          <span>
+            <BreadcrumbLink 
+              from={`/suppliers/${this.state.supplier.id}`} 
+              to={`/orders/${record.id}`}
+              description={this.state.supplier.name} />
+          </span>
+        )
+      }
+    ]
+    this.fields = ['name']
   }
 
   state = {
     suppliers: [],
-    supplier: {}
+    supplier: {},
+    orders: [],
+    tableMessage: 'Loading suppliers...',
+    formMessage: null,
   }
 
   componentWillMount() {
+    // load inital record if one is specified in the params
+    if (this.props.match.params.id) this.selectSupplier(this.props.match.params.id)
+    // populate client tables
     fetchSuppliers()
-      .then(res => this.setState({ suppliers: res.data }) )
-      .catch(err => message.error(err))
+      .then(res => {
+        this.setState({
+          suppliers: res.data,
+          tableMessage: null
+        })
+      })
+      .catch(err => {
+        this.setState({tableMessage: null})
+        message.error(err)
+      })
   }
 
-  rowSelected(record, index, event) {
-    if (!this.props.form.isFieldsTouched(['name']))
+  selectSupplier = (id) => {
+    this.setState({ formMessage: 'Loading supplier details...' })
+    fetchSupplier(id)
+      .then(res => {
+        var supplier = res.data
+        fetchSupplierOrders(id)
+        .then(res => {
+          this.setState({
+            supplier,
+            orders: res.data,
+            formMessage: null
+          }) 
+        })
+      })
+      .catch(err => {
+        this.setState({formMessage: null})
+        message.error(err)
+      })
+  }
+
+  handleSelect = (record, index, event) => {
+    if (!this.props.form.isFieldsTouched(this.fields))
     {
-      fetchSupplier(record.id)
-        .then(res => this.setState({ supplier: res.data }) )
-        .catch(err => message.error(err))
+      this.selectSupplier(record.id)
     } else {
       if (record.id !== this.state.supplier.id) {
         message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
@@ -65,7 +112,7 @@ class Suppliers extends Component {
     }
   }
 
-  handleSubmit(data, fields, mode) {
+  handleSubmit = (data, fields, mode) => {
     if (mode === 'update') {
       this.setState({
           supplier: data, 
@@ -80,27 +127,32 @@ class Suppliers extends Component {
       this.setState({
         supplier: {},
         suppliers: this.state.suppliers.filter(x => x.id !== data.id),
+        orders: []
       })
       
     } else if (mode === 'new') {
-      this.setState({supplier: {}})
+      this.setState({
+        supplier: {},
+        orders: []
+      })
     }
+  }
+
+  handleProgress = (message) => {
+    this.setState({formMessage: message})
   }
 
   renderForm() {
     const { getFieldDecorator } = this.props.form;
 
     return (
-      <div>
-        <FormToolbar 
-          onSubmit={this.handleSubmit.bind(this)}
-          onDelete={deleteSupplier}
-          onInsert={createSupplier}
-          onUpdate={updateSupplier}
-          /* onNew={this.handleNew.bind(this)} */
-          form={this.props.form}
-          record={this.state.supplier}
-          fields={['name']}/>
+      <FormHelper
+        onSubmit={this.handleSubmit.bind(this)}
+        onDelete={deleteSupplier}
+        onInsert={createSupplier}
+        onUpdate={updateSupplier}
+        onProgress={this.handleProgress}
+        record={this.state.supplier}>
         <Form onSubmit={this.handleSubmit.bind(this)}>
           <FormItem
             {...defaultFormItemLayout}
@@ -116,36 +168,40 @@ class Suppliers extends Component {
             )}
           </FormItem>
         </Form>
-      </div>
+      </FormHelper>
     )
   }
 
-  rowClassName(record, index) {
-    return record.id === this.state.supplier.id ? 'SelectedRow'  : null;
-  }
 
   render() {
+    const navigationTable = {
+      dataSource: this.state.suppliers,
+      columns: this.columns
+    }
     return (
-      <div>
-        <Header>
-          <h1>Supplier Maintenance</h1>
-        </Header>
-        <Wrapper>
-          <Side>
-            <Table
-              columns={this.columns}
-              dataSource={this.state.suppliers}
-              rowKey="id"
-              pagination={{ pageSize: 10 }}
-              onRowClick={this.rowSelected}
-              rowClassName={this.rowClassName} />
-          </Side>
-          <Body>
-            {this.renderForm()}
-          </Body>
-        </Wrapper>
-      </div>
-    );
+      <CRUDHelper 
+        form={this.props.form}
+        header="Supplier Maintenance"
+        fields={this.fields}
+        rowKey="id"
+        searchField="name"
+        searchText="Search by supplier name..."
+        path={this.props.location.pathname}
+        currentRecord={this.state.supplier}
+        navigationTable={navigationTable}
+        sideMessage={this.state.tableMessage}
+        bodyMessage={this.state.formMessage}
+        search={this.state.search}
+        filter={this.state.filter}
+        onSelect={this.handleSelect}>
+        {this.renderForm()}
+        <Table
+            columns={this.orderColumns}
+            dataSource={this.state.orders}
+            rowKey="id"
+            pagination={{ pageSize: 10 }}/>
+      </CRUDHelper>
+    )
   }
 }
 

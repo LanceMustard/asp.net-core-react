@@ -26,6 +26,11 @@ export const Toolbar = styled.div`
 `
 
 class FormToolbar extends Component {
+  _updateProgress = (message) => {
+    if (this.props.onProgress) {
+      this.props.onProgress(message) 
+    } 
+  }
 
   _changesExist() {
     return this.props.form.isFieldsTouched(this.props.fields)
@@ -37,7 +42,8 @@ class FormToolbar extends Component {
       if (!err) {
         const { form, onSubmit, fields } = this.props
         if (onSubmit) {
-          const hide = message.loading('Saving record..', 0);
+          // const hide = message.loading('Saving record..', 0);
+          this._updateProgress('Saving record...')
           let record = Object.assign(this.props.record, values)
           let update = false
           let apiCall= undefined
@@ -69,14 +75,18 @@ class FormToolbar extends Component {
             .then((res) => {
               onSubmit(res.data, fields, res.update ? 'update' : 'insert')
               form.resetFields(fields)
-              hide()
+              // hide()
+              this._updateProgress(null)
               message.success('Save complete')
             })
             .catch(err => {
-              hide()
+              // hide()
+              this._updateProgress(null)
               message.error(err)
               return
             })
+        } else {
+          console.error('No onSubmit event defined')
         }
       } else {
         message.error(err)
@@ -93,35 +103,39 @@ class FormToolbar extends Component {
   _handleDelete = () => {
     let confirmMessage = this.props.deleteMessage || 'Please confirm that you want to delete this record'
     const { onDelete, onSubmit, record, fields } = this.props
-    confirm(confirmMessage, { title: "Delete confirmation" }).then(
-      (ok) => {
+    confirm(confirmMessage, { title: "Delete confirmation" })
+    .then((ok) => {
         if (onDelete) {
-          const hide = message.loading('Deleting record..', 0);
-          (
-            new Promise(function (resolve, reject) {
-              onDelete(record.id)
-                .then(res => {
-                  resolve({
-                    data: res.data, 
-                  })
-                })
-                .catch(err => {
-                  reject(err)
-                })
+          if (record.id) {
+          this._updateProgress('Deleting record...')
+          let deletePromise =  new Promise((resolve, reject) => {
+            try {
+              const result = onDelete(record.id)
+              resolve(result)
+            } 
+            catch (err) {
+              reject(err)
+            }
+          })
+          deletePromise
+            .then((res) => {
+              onSubmit(res.data, fields, 'delete')
+              this._updateProgress(null)
+              message.success('Delete complete')
             })
-          )
-          .then((res) => {
-            onSubmit(res.data, fields, 'delete')
-            hide()
-            message.success('Delete complete')
-          })
-          .catch(err => {
-            hide()
-            message.error(err)
-            return
-          })
+            .catch(err => {
+              this._updateProgress(null)
+              message.error(err)
+            })
+          } else {
+            // no record to delete so just clear the form (same code as Clear/handleNew)
+            // ToDO: manage the enabled state of the Delete button to only be available when a record exists
+            this._handleReset()
+            if (this.props.onNew) this.props.onNew(this.props.fields)
+            this.props.onSubmit(undefined, this.props.fields, 'new')
+          }
         } else {
-          message.error('No delete method defined')
+          message.error('No delete event defined')
         }
       },
       (cancel) => { /* do nothing */ }
@@ -134,13 +148,11 @@ class FormToolbar extends Component {
       confirm(confirmMessage).then(
         (ok) => {
           this._handleReset()
-          if (this.props.onNew) this.props.onNew(this.props.fields)
           this.props.onSubmit(undefined, this.props.fields, 'new')
         },
         (cancel) => { /* do nothing */ }
       )
     } else {
-      if (this.props.onNew) this.props.onNew(this.props.fields)
       this.props.onSubmit(undefined, this.props.fields, 'new')
     }
   }
@@ -174,4 +186,23 @@ class FormToolbar extends Component {
   }
 }
 
-export default FormToolbar
+class FormHelper extends Component {
+  render() {
+    return (
+      <div>
+        <FormToolbar 
+          onSubmit={this.props.onSubmit}
+          onDelete={this.props.onDelete}
+          onInsert={this.props.onInsert}
+          onUpdate={this.props.onUpdate}
+          onProgress={this.props.onProgress}
+          record={this.props.record}
+          form={this.props.form}
+          />
+        {this.props.children}
+      </div>
+    )
+  }
+}
+
+export default FormHelper

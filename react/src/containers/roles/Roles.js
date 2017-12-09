@@ -2,6 +2,7 @@ import React, {
   Component
 } from 'react'
 import {
+  Spin,
   Table,
   Form,
   Input,
@@ -42,22 +43,34 @@ class Roles extends Component {
   }
 
   state = {
+    loading: true,
+    spinMessage: null,
     roles: [],
     role: {}
   }
 
   componentWillMount() {
     fetchRoles()
-      .then(res => this.setState({ roles: res.data }) )
+      .then(res => this.setState({ 
+        roles: res.data,
+        loading: false 
+       }) )
       .catch(err => message.error(err))
   }
 
   rowSelected(record, index, event) {
     if (!this.props.form.isFieldsTouched(['name']))
     {
+      this.setState({spinMessage: 'Loading role details...'})
       fetchRole(record.id)
-        .then(res => this.setState({ role: res.data }) )
-        .catch(err => message.error(err))
+        .then(res => this.setState({ 
+          role: res.data,
+          spinMessage: null 
+        }))
+        .catch(err => {
+          this.setState({spinMessage: null})
+          message.error(err)
+        })
     } else {
       if (record.id !== this.state.role.id) {
         message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
@@ -87,17 +100,21 @@ class Roles extends Component {
     }
   }
 
+  handleProress(message) {
+    this.setState({spinMessage: message})
+  }
+
   renderForm() {
     const { getFieldDecorator } = this.props.form;
 
     return (
-      <div>
+      <Spin tip={this.state.spinMessage} spinning={this.state.spinMessage ? true : false}>
         <FormToolbar 
           onSubmit={this.handleSubmit.bind(this)}
           onDelete={deleteRole}
           onInsert={createRole}
           onUpdate={updateRole}
-          /* onNew={this.handleNew.bind(this)} */
+          onProgress={this.handleProress.bind(this)}
           form={this.props.form}
           record={this.state.role}
           fields={['name']}/>
@@ -116,7 +133,7 @@ class Roles extends Component {
             )}
           </FormItem>
         </Form>
-      </div>
+      </Spin>
     )
   }
 
@@ -132,13 +149,15 @@ class Roles extends Component {
         </Header>
         <Wrapper>
           <Side>
-            <Table
-              columns={this.columns}
-              dataSource={this.state.roles}
-              rowKey="id"
-              pagination={{ pageSize: 10 }}
-              onRowClick={this.rowSelected}
-              rowClassName={this.rowClassName} />
+            <Spin tip="Loading roles..." spinning={this.state.loading}>
+              <Table
+                columns={this.columns}
+                dataSource={this.state.roles}
+                rowKey="id"
+                pagination={{ pageSize: 10 }}
+                onRowClick={this.rowSelected}
+                rowClassName={this.rowClassName} />
+            </Spin>
           </Side>
           <Body>
             {this.renderForm()}

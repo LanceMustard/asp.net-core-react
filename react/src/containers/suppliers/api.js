@@ -14,6 +14,11 @@ export function fetchSupplier(id) {
   return request
 }
 
+export function fetchSupplierOrders(id) {
+  const request = axios.get(`${ROOT_URL}api/Supplier/Orders/${id}`)
+  return request
+}
+
 export function createSupplier(props) {
   const request = axios.post(`${ROOT_URL}${API}`, props)
   return request

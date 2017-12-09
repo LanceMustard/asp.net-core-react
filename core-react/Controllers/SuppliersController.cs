@@ -126,4 +126,27 @@ namespace core_react.Controllers
             return _context.Suppliers.Any(e => e.Id == id);
         }
     }
+
+    [Route("api/Supplier/Orders")]
+    [Produces("application/json")]
+    public class SupplierOrdersController : Controller
+    {
+        private readonly ApplicationContext _context;
+
+        public SupplierOrdersController(ApplicationContext context)
+        {
+            _context = context;
+            InitializeData.BuildDataset(context);
+        }
+
+        // GET: api/Supplier/Orders
+        [HttpGet("{id}")]
+        public List<Order> GetOrders([FromRoute] int id)
+        {
+            List<Order> orders = (from o in _context.Orders where o.SupplierId == id select o).ToList();
+            return orders;
+        }
+    }
+
+
 }

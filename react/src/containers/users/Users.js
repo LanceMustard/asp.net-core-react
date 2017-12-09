@@ -1,25 +1,16 @@
 import React, {
   Component
 } from 'react'
-import { connect } from 'react-redux'
 import {
-  Spin,
-  Table,
   Form,
-  Icon,
   Input,
   Select,
   message
 } from 'antd'
-import {
-  Header,
-  Wrapper,
-  Side,
-  Body
-} from '../../components/Layout'
-import FormToolbar, {
+import FormHelper, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
+import CRUDHelper from '../../components/CRUDHelper'
 import {
   fetchUsers,
   fetchUser,
@@ -27,17 +18,13 @@ import {
   updateUser,
   deleteUser
 } from './api'
-import { addBreadcrumb, removeBreadcrumb } from './../../actions/breadcrumbs'
 
 const FormItem = Form.Item
 const Option = Select.Option
-const Search = Input.Search
 
 class Users extends Component {
   constructor(props) {
     super(props);
-    this.rowSelected = this.rowSelected.bind(this)
-    this.rowClassName = this.rowClassName.bind(this)
     this.columns = [
       {
         title: 'Name',
@@ -56,50 +43,51 @@ class Users extends Component {
         onFilter: (value, record) => record.role.indexOf(value) === 0,
         sorter: (a, b) => a.role.length - b.role.length
       }
-    ];
+    ]
+    this.fields = ['name', 'osUser', 'email', 'role']
   }
 
   state = {
-    loading: true,
-    search: '',
-    filter: null,
+    tableMessage: 'Loading users...',
+    formMessage: null,
     users: [],
     user: {role: "Read Only"}
   }
 
   componentWillMount() {
-    this.updateBreadcrumbs(this.props.location.pathname)
+    // load inital record if one is specified in the params
+    if (this.props.match.params.id) this.selectUser(this.props.match.params.id)
+    // populate user tables
     fetchUsers()
       .then(res => {
         this.setState({ 
           users: res.data,
-          loading: false 
+          tableMessage: null 
         }) 
       })
       .catch(err => {
-        this.setState({ loading: false }) 
+        this.setState({ tableMessage: null }) 
+        message.error(err)
+      })
+  }
+
+  selectUser = (id) => {
+    this.setState({formMessage: 'Loading user details...'})
+    fetchUser(id)
+      .then(res => this.setState({ 
+        user: res.data,
+        formMessage: null 
+      }))
+      .catch(err => {
+        this.setState({formMessage: null})
         message.error(err)
       })
   }
   
-  // updateBreadcrumbs = (path) => {
-  //   let removeRemaining = false
-  //   let links = this.props.breadcrumbs.links
-  //   let removeBreadcrumb = this.props.removeBreadcrumb
-  //   for (var i = 0; i < links.length; i++) {
-  //     if (links[i].path === path) {
-  //       removeBreadcrumb(links[i].uuid)
-  //       removeRemaining = true
-  //     } else if (removeRemaining) removeBreadcrumb(links[i].uuid)
-  //   }
-  // }
-
-  rowSelected(record, index, event) {
-    if (!this.props.form.isFieldsTouched(['name']))
+  handleSelect = (record, index, event) => {
+    if (!this.props.form.isFieldsTouched(this.fields))
     {
-      fetchUser(record.id)
-        .then(res => this.setState({ user: res.data }) )
-        .catch(err => message.error(err))
+      this.selectUser(record.id)
     } else {
       if (record.id !== this.state.user.id) {
         message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
@@ -129,24 +117,20 @@ class Users extends Component {
     }
   }
 
-  handleNew() {
-
+  handleProgress = (message) => {
+    this.setState({formMessage: message})
   }
 
   renderForm() {
     const { getFieldDecorator } = this.props.form;
-
     return (
-      <div>
-        <FormToolbar 
-          onSubmit={this.handleSubmit.bind(this)}
-          onDelete={deleteUser}
-          onInsert={createUser}
-          onUpdate={updateUser}
-          onNew={this.handleNew.bind(this)}
-          form={this.props.form}
-          record={this.state.user}
-          fields={['name', 'osUser', 'email', 'role']}/>
+      <FormHelper
+        onSubmit={this.handleSubmit.bind(this)}
+        onDelete={deleteUser}
+        onInsert={createUser}
+        onUpdate={updateUser}
+        onProgress={this.handleProgress}
+        record={this.state.user}>
         <Form onSubmit={this.handleSubmit.bind(this)}>
           <FormItem
             {...defaultFormItemLayout}
@@ -205,75 +189,36 @@ class Users extends Component {
             )}
           </FormItem>
         </Form>
-      </div>
+      </FormHelper>
     )
-  }
-
-  renderTable() {
-    return (
-      <Spin tip="Loading..." spinning={this.state.loading}>
-        <Table
-          columns={this.columns}
-          dataSource={this.state.filter || this.state.users}
-          rowKey="id"
-          pagination={{ pageSize: 10 }}
-          onRowClick={this.rowSelected}
-          rowClassName={this.rowClassName} />
-      </Spin>
-    )
-  }
-
-  rowClassName(record, index) {
-    return record.id === this.state.user.id ? 'SelectedRow'  : null;
-  }
-
-  onSearch = (e) => {
-    let search = e.target.value
-    const reg = new RegExp(search, 'gi')
-    let filter = this.state.users.filter(user => user.name.match(reg))
-    this.setState({ search, filter })
-  }
-
-  resetSearch = () => {
-    this.setState({
-      search: '',
-      filter: null
-    })
   }
 
   render() {
-    const suffix = this.state.search ? <Icon type="close-circle" onClick={this.resetSearch} /> : null
+    const navigationTable = {
+      dataSource: this.state.users,
+      columns: this.columns
+    }
     return (
-      <div>
-        <Header>
-          <h1>User Maintenance</h1>
-        </Header>
-        <Wrapper>
-          <Side>
-            <Search
-              prefix={suffix} 
-              placeholder="Search by user name"
-              value={this.state.search}
-              onChange={this.onSearch}
-              onPressEnter={this.onSearch}/>
-            {this.renderTable()}
-          </Side>
-          <Body>
-            {this.renderForm()}
-          </Body>
-        </Wrapper>
-      </div>
+      <CRUDHelper 
+        form={this.props.form}
+        header="User Maintenance"
+        fields={this.fields}
+        rowKey="id"
+        searchText="Search by user name..."
+        path={this.props.location.pathname}
+        currentRecord={this.state.user}
+        navigationTable={navigationTable}
+        sideMessage={this.state.tableMessage}
+        bodyMessage={this.state.formMessage}
+        search={this.state.search}
+        filter={this.state.filter}
+        onSelect={this.handleSelect}>
+        {this.renderForm()}
+      </CRUDHelper>
     );
   }
 }
 
-function mapStateToProps(state) {
-  return { breadcrumbs: state.breadcrumbs }
-}
-
 Users = Form.create()(Users);
 
-export default connect(mapStateToProps,
-  { addBreadcrumb,
-    removeBreadcrumb
-   })(Users)
+export default Users

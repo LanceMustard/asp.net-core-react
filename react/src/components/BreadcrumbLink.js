@@ -1,7 +1,9 @@
 import React, { Component } from 'react'
+import { connect } from 'react-redux'
 import { Button } from 'antd'
 import { Link } from 'react-router-dom'
 import styled from 'styled-components'
+import { addBreadcrumb } from './../actions/breadcrumbs'
 
 const RightAlignLink = styled(Link)`
   float: right !important;
@@ -9,8 +11,8 @@ const RightAlignLink = styled(Link)`
 
 export class BreadcrumbLink extends Component {
   handleClick = () => {
-    if (this.props.onClick) {
-      this.props.onClick({
+    if (this.props.addBreadcrumb) {
+      this.props.addBreadcrumb({
         description: this.props.description,
         path: this.props.from
       })
@@ -28,4 +30,10 @@ export class BreadcrumbLink extends Component {
   }
 }
 
-export default BreadcrumbLink;
+function mapStateToProps(state) {
+  return { breadcrumbs: state.breadcrumbs }
+}
+
+export default connect(mapStateToProps, {
+  addBreadcrumb
+})(BreadcrumbLink)

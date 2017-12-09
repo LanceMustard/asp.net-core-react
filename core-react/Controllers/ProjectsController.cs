@@ -141,9 +141,9 @@ namespace core_react.Controllers
             InitializeData.BuildDataset(context);
         }
 
-        // GET: api/Project/Suppliers
+        // GET: api/Project/Orders
         [HttpGet("{id}")]
-        public List<Order> GetOrder([FromRoute] int id)
+        public List<Order> GetOrders([FromRoute] int id)
         {
             List<Order> orders = (from o in _context.Orders where o.ProjectId == id select o).ToList();
             return orders;

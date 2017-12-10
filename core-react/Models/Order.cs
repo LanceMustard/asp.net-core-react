@@ -13,6 +13,11 @@ namespace Core.React.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [Required(ErrorMessage = "An order description is required")]
+        public string Number { get; set; }
+        [Required(ErrorMessage = "An order number is required")]
+        public DateTime AwardDate { get; set; }
+        public string RequisitionNumber { get; set; }
+        public string ResponsibleEngineer { get; set; }
         public string Description { get; set; }
         public int SupplierId { get; set; }
         public int ProjectId { get; set; }

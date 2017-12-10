@@ -5,8 +5,10 @@ import {
   Form,
   Input,
   Table,
+  Select,
   message
 } from 'antd'
+import Moment from 'react-moment'
 import FormHelper, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
@@ -20,46 +22,22 @@ import {
   updateProject,
   deleteProject
 } from './api'
+import { fetchClients } from '../clients/api'
 
-const FormItem = Form.Item;
+const FormItem = Form.Item
+const Option = Select.Option
 
 class Projects extends Component {
   constructor(props) {
     super(props);
-    this.columns = [
-      {
-        title: 'Name',
-        dataIndex: 'name',
-        key: 'name',
-        sorter: (a, b) => a.name.length - b.name.length,
-      }
-    ]
-    this.orderColumns = [
-      {
-        title: 'Orders',
-        dataIndex: 'description',
-        key: 'description',
-        sorter: (a, b) => a.description.length - b.description.length,
-      },
-      {
-        key: 'action',
-        render: (text, record) => (
-          <span>
-            <BreadcrumbLink 
-              from={`/projects/${this.state.project.id}`} 
-              to={`/orders/${record.id}`}
-              description={this.state.project.name} />
-          </span>
-        )
-      }
-    ]
-    this.fields = ['name']
+    this.fields = ['name', 'clientId']
   }
 
   state = {
     projects: [],
     project: {},
     orders: [],
+    clients: [],
     tableMessage: 'Loading projects...',
     formMessage: null,
   }
@@ -67,13 +45,20 @@ class Projects extends Component {
   componentWillMount() {
     // load inital record if one is specified in the params
     if (this.props.match.params.id) this.selectProject(this.props.match.params.id)
-    // populate client tables
+    // populate projects table
     fetchProjects()
       .then(res => {
-        this.setState({
-          projects: res.data,
-          tableMessage: null
-        })
+        let projects = res.data
+        fetchClients()
+          .then(res => {
+            let clients = res.data
+            projects = this.buildDataset(projects, clients)
+            this.setState({
+              projects,
+              clients,
+              tableMessage: null
+            })
+          })
       })
       .catch(err => {
         this.setState({tableMessage: null})
@@ -81,11 +66,28 @@ class Projects extends Component {
       })
   }
 
+    // merge in related records with the order record
+    buildDataset = (projects, clients) => {
+      let retval = []
+      for (let i in projects) {
+        retval.push(this.handleForeignFields(projects[i], clients))
+      }
+      return retval
+    }
+  
+    handleForeignFields = (project, clients) => {
+      if (project) {
+        clients = clients ? clients : this.state.clients
+        project.client = clients.find(x => x.id === project.clientId)
+      }
+      return project
+    }
+
   selectProject = (id) => {
     this.setState({formMessage: 'Loading project details...'})
     fetchProject(id)
       .then(res => {
-        var project = res.data
+        let  project = this.handleForeignFields(res.data)
         fetchProjectOrders(id)
         .then(res => {
           this.setState({
@@ -94,12 +96,11 @@ class Projects extends Component {
             formMessage: null
           }) 
         })
-      .catch(err => {
-        this.setState({formMessage: null})
-        message.error(err)
-      })
     })
-    .catch(err => message.error(err))
+    .catch(err => {
+      this.setState({formMessage: null})
+      console.log('selectProject error:', err)
+    })
   }
 
   handleSelect = (record, index, event) => {
@@ -114,20 +115,21 @@ class Projects extends Component {
   }
 
   handleSubmit = (data, fields, mode) => {
+    let project = this.handleForeignFields(data)
     if (mode === 'update') {
       this.setState({
-          project: data, 
-          projects: this.state.projects.map(s => s.id === data.id ? data : s)
+          project, 
+          projects: this.state.projects.map(s => s.id === project.id ? project : s)
         })
     } else if (mode === 'insert'){
       this.setState({
-        project: data, 
-        projects: [ ...this.state.projects, data ]
+        project, 
+        projects: [ ...this.state.projects, project ]
       })
     } else if (mode === 'delete') {
       this.setState({
         project: {},
-        projects: this.state.projects.filter(x => x.id !== data.id),
+        projects: this.state.projects.filter(x => x.id !== project.id),
         orders: []
       })
       
@@ -169,15 +171,89 @@ class Projects extends Component {
               <Input />
             )}
           </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
+            label="Client:">
+            {getFieldDecorator('clientId', {
+              initialValue: this.state.project.clientId,
+              // initialValue: this.state.project.client ? this.state.project.client.name : '',
+              rules: [{ 
+                required: true, 
+                message: 'Please select a client!' }],
+            })(
+              <Select placeholder="Select client">
+                {this.state.clients.map(c => <Option value={c.id} key={c.id}>{c.name}</Option>)}
+              </Select>
+            )}
+          </FormItem>
         </Form>
       </FormHelper>
     )
   }
 
   render() {
+    let columns = [
+      {
+        title: 'Name',
+        dataIndex: 'name',
+        key: 'name',
+        sorter: (a, b) => a.name.length - b.name.length,
+      },
+      {
+        title: 'Client',
+        dataIndex: 'client.name',
+        key: 'client.name',
+        sorter: (a, b) => a.client.name.length - b.client.name.length,
+        filters: this.state.clients.map(c => ({ text: c.name, value: c.name })),
+        onFilter: (value, record) => record.client.name === value,
+      }
+    ]
+    let orderColumns = [
+      {
+        title: 'Orders',
+        dataIndex: 'description',
+        key: 'description',
+        sorter: (a, b) => a.description.length - b.description.length,
+      },
+      {
+        key: 'action',
+        render: (text, record) => (
+          <span>
+            <BreadcrumbLink 
+              from={`/projects/${this.state.project.id}`} 
+              to={`/orders/${record.id}`}
+              description={this.state.project.name} />
+          </span>
+        )
+      },
+      {
+        title: 'Engineer',
+        dataIndex: 'responsibleEngineer',
+        key: 'ResponsibleEngineer',
+        sorter: (a, b) => a.responsibleengineer.length - b.responsibleengineer.length,
+      },
+      {
+        title: 'Award Date',
+        dataIndex: 'awardDate',
+        key: 'awardDate',
+        render: (text, record) => { return (<Moment format="YYYY/MM/DD">{text}</Moment>) },
+        sorter: (a, b) => a.awarddate.length - b.awarddate.length,
+      },
+      {
+        key: 'action',
+        render: (text, record) => (
+          <span>
+            <BreadcrumbLink 
+              from={`/suppliers/${this.state.supplier.id}`} 
+              to={`/orders/${record.id}`}
+              description={this.state.supplier.name} />
+          </span>
+        )
+      }
+    ]
     const navigationTable = {
       dataSource: this.state.projects,
-      columns: this.columns
+      columns: columns
     }
     return (
       <CRUDHelper 
@@ -196,7 +272,7 @@ class Projects extends Component {
         onSelect={this.handleSelect}>
         {this.renderForm()}
         <Table
-            columns={this.orderColumns}
+            columns={orderColumns}
             dataSource={this.state.orders}
             rowKey="id"
             pagination={{ pageSize: 10 }}/>

@@ -7,6 +7,7 @@ import {
   Table,
   message
 } from 'antd'
+import Moment from 'react-moment'
 import FormHelper, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
@@ -26,33 +27,6 @@ const FormItem = Form.Item;
 class Suppliers extends Component {
   constructor(props) {
     super(props);
-    this.columns = [
-      {
-        title: 'Name',
-        dataIndex: 'name',
-        key: 'name',
-        sorter: (a, b) => a.name.length - b.name.length,
-      }
-    ]
-    this.orderColumns = [
-      {
-        title: 'Orders',
-        dataIndex: 'description',
-        key: 'description',
-        sorter: (a, b) => a.description.length - b.description.length,
-      },
-      {
-        key: 'action',
-        render: (text, record) => (
-          <span>
-            <BreadcrumbLink 
-              from={`/suppliers/${this.state.supplier.id}`} 
-              to={`/orders/${record.id}`}
-              description={this.state.supplier.name} />
-          </span>
-        )
-      }
-    ]
     this.fields = ['name']
   }
 
@@ -70,6 +44,7 @@ class Suppliers extends Component {
     // populate client tables
     fetchSuppliers()
       .then(res => {
+        console.log('fetchSuppliers', res.data)
         this.setState({
           suppliers: res.data,
           tableMessage: null
@@ -88,6 +63,7 @@ class Suppliers extends Component {
         var supplier = res.data
         fetchSupplierOrders(id)
         .then(res => {
+          console.log('fetchSupplierOrders', res.data)
           this.setState({
             supplier,
             orders: res.data,
@@ -97,7 +73,7 @@ class Suppliers extends Component {
       })
       .catch(err => {
         this.setState({formMessage: null})
-        message.error(err)
+        console.error(err)
       })
   }
 
@@ -144,7 +120,6 @@ class Suppliers extends Component {
 
   renderForm() {
     const { getFieldDecorator } = this.props.form;
-
     return (
       <FormHelper
         onSubmit={this.handleSubmit.bind(this)}
@@ -174,9 +149,55 @@ class Suppliers extends Component {
 
 
   render() {
+    let columns = [
+      {
+        title: 'Name',
+        dataIndex: 'name',
+        key: 'name',
+        sorter: (a, b) => a.name.length - b.name.length,
+      }
+    ]
+    let orderColumns = [
+      {
+        title: 'Order Number',
+        dataIndex: 'number',
+        key: 'number',
+        sorter: (a, b) => a.number.length - b.number.length,
+      },
+      {
+        title: 'Description',
+        dataIndex: 'description',
+        key: 'description',
+        sorter: (a, b) => a.description.length - b.description.length,
+      },
+      {
+        title: 'Engineer',
+        dataIndex: 'responsibleEngineer',
+        key: 'ResponsibleEngineer',
+        sorter: (a, b) => a.responsibleengineer.length - b.responsibleengineer.length,
+      },
+      {
+        title: 'Award Date',
+        dataIndex: 'awardDate',
+        key: 'awardDate',
+        render: (text, record) => { return (<Moment format="YYYY/MM/DD">{text}</Moment>) },
+        sorter: (a, b) => a.awarddate.length - b.awarddate.length,
+      },
+      {
+        key: 'action',
+        render: (text, record) => (
+          <span>
+            <BreadcrumbLink 
+              from={`/suppliers/${this.state.supplier.id}`} 
+              to={`/orders/${record.id}`}
+              description={this.state.supplier.name} />
+          </span>
+        )
+      }
+    ]
     const navigationTable = {
       dataSource: this.state.suppliers,
-      columns: this.columns
+      columns: columns
     }
     return (
       <CRUDHelper 
@@ -196,7 +217,7 @@ class Suppliers extends Component {
         onSelect={this.handleSelect}>
         {this.renderForm()}
         <Table
-            columns={this.orderColumns}
+            columns={orderColumns}
             dataSource={this.state.orders}
             rowKey="id"
             pagination={{ pageSize: 10 }}/>

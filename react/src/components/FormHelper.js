@@ -45,6 +45,7 @@ class FormToolbar extends Component {
           // const hide = message.loading('Saving record..', 0);
           this._updateProgress('Saving record...')
           let record = Object.assign(this.props.record, values)
+          console.log(JSON.stringify(record))
           let update = false
           let apiCall= undefined
           if (record.id) {

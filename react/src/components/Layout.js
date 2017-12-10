@@ -15,11 +15,13 @@ export const Wrapper = styled.div`
 `
 export const Side = styled.div`
   min-width: 400px;
+  min-height: 600px;
   margin: 10px;
 `
 export const Body = styled.div`
   margin-top: 20px;  
   min-width: 600px;
+  min-height: 600px;
 `
 
 export const FormToolbar = styled.div`

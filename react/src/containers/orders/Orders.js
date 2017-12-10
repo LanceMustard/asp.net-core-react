@@ -4,8 +4,11 @@ import React, {
 import {
   Form,
   Input,
+  Select,
+  DatePicker,
   message
 } from 'antd'
+import moment from 'moment'
 import FormHelper, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
@@ -17,57 +20,90 @@ import {
   updateOrder,
   deleteOrder
 } from './api'
+import { fetchProjects } from '../projects/api'
+import { fetchSuppliers } from '../suppliers/api'
 
-const FormItem = Form.Item;
+const FormItem = Form.Item
+const Option = Select.Option
 
 class Orders extends Component {
   constructor(props) {
     super(props);
-    this.columns = [
-      {
-        title: 'Description',
-        dataIndex: 'description',
-        key: 'description',
-        sorter: (a, b) => a.description.length - b.description.length,
-      }
-    ]
-    this.fields = ['description']
+    this.fields = ['number', 'description', 'projectId', 'supplierId', 'requisitionNumber', 'responsibleEngineer', 'awardDate']
   }
 
   state = {
     orders: [],
     order: {},
+    projects: [],
+    suppliers: [],
     tableMessage: 'Loading projects...',
     formMessage: null,
+    columns: this.columns
   }
 
   componentWillMount() {
-    // load inital record if one is specified in the params
-    if (this.props.match.params.id) this.selectOrder(this.props.match.params.id)
-    // populate client tables
     fetchOrders()
       .then(res => {
-        this.setState({
-          orders: res.data,
-          tableMessage: null
-        })
+        let orders = res.data
+        fetchProjects()
+          .then(res => {
+            let projects = res.data
+            fetchSuppliers()
+              .then(res => {
+                let suppliers = res.data
+                orders = this.buildDataset(orders, projects, suppliers)
+                this.setState({
+                  orders,
+                  projects,
+                  suppliers,
+                  tableMessage: null
+                })
+                // load inital record if one is specified in the params
+                if (this.props.match.params.id) this.selectOrder(this.props.match.params.id)
+              })
+          })
       })
       .catch(err => {
         this.setState({tableMessage: null})
-        message.error(err)
+        console.error(err)
       })
+  }
+
+  // merge in related records with the order record
+  buildDataset = (orders, projects, suppliers) => {
+    let retval = []
+    for (let i in orders) {
+      retval.push(this.handleForeignFields(orders[i], projects, suppliers))
+    }
+    return retval
+  }
+
+  handleForeignFields = (order, projects, suppliers) => {
+    if (order) {
+      projects = projects ? projects : this.state.projects
+      suppliers = suppliers ? suppliers : this.state.suppliers 
+      order.project = projects.find(x => x.id === order.projectId)
+      order.supplier = suppliers.find(x => x.id === order.supplierId)
+    }
+    return order
   }
 
   selectOrder = (id) => {
     this.setState({formMessage: 'Loading order details...'})
     fetchOrder(id)
-      .then(res => this.setState({ 
-        order: res.data,
-        formMessage: null
-      }) )
+      .then(res => {
+        console.log('selectOrder', res.data)
+        let order = this.handleForeignFields(res.data)
+        console.log('handleForeignFields', order)
+        this.setState({ 
+          order,
+          formMessage: null
+        }) 
+      })
       .catch(err => {
         this.setState({formMessage: null})
-        message.error(err)
+        console.error('selectOrder error:', err)
       })
   }
 
@@ -82,20 +118,21 @@ class Orders extends Component {
   }
 
   handleSubmit = (data, fields, mode) => {
+    let order = this.handleForeignFields(data)
     if (mode === 'update') {
       this.setState({
-          order: data, 
-          orders: this.state.orders.map(s => s.id === data.id ? data : s)
+          order, 
+          orders: this.state.orders.map(s => s.id === order.id ? order : s)
         })
     } else if (mode === 'insert'){
       this.setState({
-        order: data, 
-        orders: [ ...this.state.orders, data ]
+        order, 
+        orders: [ ...this.state.orders, order ]
       })
     } else if (mode === 'delete') {
       this.setState({
         order: {},
-        orders: this.state.orders.filter(x => x.id !== data.id),
+        orders: this.state.orders.filter(x => x.id !== order.id),
       })
       
     } else if (mode === 'new') {
@@ -121,6 +158,19 @@ class Orders extends Component {
         <Form onSubmit={this.handleSubmit.bind(this)}>
           <FormItem
             {...defaultFormItemLayout}
+            label="Number:">
+            {getFieldDecorator('number', {
+              initialValue: this.state.order.number,
+              rules: [{ 
+                required: true, 
+                message: 'Please input an order number!', 
+                whitespace: true }],
+            })(
+              <Input />
+            )}
+          </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
             label="Description:">
             {getFieldDecorator('description', {
               initialValue: this.state.order.description,
@@ -132,15 +182,103 @@ class Orders extends Component {
               <Input />
             )}
           </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
+            label="Project:">
+            {getFieldDecorator('projectId', {
+              initialValue: this.state.order.projectId,
+              // initialValue: this.state.order.project ? this.state.order.project.name : '',
+              rules: [{ 
+                required: true, 
+                message: 'Please select a project!' 
+              }],
+            })(
+              <Select placeholder="Select project">
+                {this.state.projects.map(p=> <Option value={p.id} key={p.id}>{p.name}</Option>)}
+              </Select>
+            )}
+          </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
+            label="Supplier:">
+            {getFieldDecorator('supplierId', {
+              initialValue: this.state.order.supplierId,
+              // initialValue: this.state.order.supplier ? this.state.order.supplier.name : '',
+              rules: [{ 
+                required: true, 
+                message: 'Please select a supplier!' 
+              }],
+            })(
+              <Select placeholder="Select supplier">
+                {this.state.suppliers.map(s => <Option value={s.id} key={s.id}>{s.name}</Option>)}
+              </Select>
+            )}
+          </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
+            label="Requisition Number:">
+            {getFieldDecorator('requisitionNumber', {
+              initialValue: this.state.order.requisitionNumber,
+            })(
+              <Input />
+            )}
+          </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
+            label="Responsible Engineer:">
+            {getFieldDecorator('responsibleEngineer', {
+              initialValue: this.state.order.responsibleEngineer,
+            })(
+              <Input />
+            )}
+          </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
+            label="Award Date:">
+            {getFieldDecorator('awardDate', {
+              // initialValue: (<Moment format="YYYY/MM/DD">{this.state.order.awardDate}</Moment>),
+              initialValue: moment(this.state.order.awardDate), 
+              rules: [{ 
+                type: 'object', 
+                message: 'Please select an award date!' 
+              }]
+            })(
+              <DatePicker />
+            )}
+          </FormItem>
         </Form>
       </FormHelper>
     )
   }
 
   render() {
+    let columns = [
+      {
+        title: 'Description',
+        dataIndex: 'description',
+        key: 'description',
+        sorter: (a, b) => a.description.length - b.description.length,
+      },
+      {
+        title: 'Supplier',
+        dataIndex: 'supplier.name',
+        key: 'supplier.name',
+        sorter: (a, b) => a.supplier.name.length - b.supplier.name.length,
+        filters: this.state.suppliers.map(s => ({ text: s.name, value: s.name })),
+        onFilter: (value, record) => record.supplier.name === value,
+      },
+      {
+        title: 'Project',
+        dataIndex: 'project.name',
+        key: 'project.name',
+        sorter: (a, b) => a.project.name.length - b.project.name.length,
+        filters: this.state.projects.map(p => ({ text: p.name, value: p.name })),
+        onFilter: (value, record) => record.project.name === value,
+      }
+    ]
     const navigationTable = {
       dataSource: this.state.orders,
-      columns: this.columns
+      columns: columns
     }
     return (
       <CRUDHelper 
@@ -160,7 +298,7 @@ class Orders extends Component {
         onSelect={this.handleSelect}>
         {this.renderForm()}
       </CRUDHelper>
-    );
+    )
   }
 }
 

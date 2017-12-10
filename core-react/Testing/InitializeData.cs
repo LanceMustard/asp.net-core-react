@@ -7,7 +7,12 @@ using Core.React.Models;
 namespace Core.React.Testing
 {
     static public class InitializeData
-    {
+    { 
+        static private string[] orders = new string[] { "Valves", "Pumps", "Motors", "Pipe Fabrication", "Bolts", "Gaskets", "Structural Steel", "HDPE", "Junction Boxs", "HVAC", "Gas Turbine", "Heat Exchanger" };
+        static private string[] suppliers = new string[] { "Blackwoods", "Siemens", "Camerons", "AGC", "All Pumps", "UGL", "Kelair", "Grundfos", "Allied" };
+        static private string[] projects = new string[] { "Domgas", "KLE", "Koodaideri", "Yarnima", "KJV Train 4", "Basgas", "Napa Napa", "Lakshmi", "Sawan", "Pluto gas", "Ravensthorne Nickle", "Boddington Gold Mine" };
+        static private string[] clients = new string[] { "Woodside", "Chevron", "RIO Tinto", "BHP" };
+        static private string[] engineers = new string[] { "Klay Thompson", "Kevon Looney", "Draymond Green", "Patrick McCaw", "Damian Jones", "Jordan Bell", "Stephen Curry", "Kevin Durant", "Andre Iguodala", "Shaun Livingston", "Nick Young", "Zaza Pachulia", "Omri Casspi", "David West", "JaVale McGee", "Quinn Cook", "Chris Boucher" };
         static public void BuildDataset(ApplicationContext context)
         {
             // Admin
@@ -181,83 +186,58 @@ namespace Core.React.Testing
 
         static private void AddSuppliers(ApplicationContext context)
         {
-            context.Suppliers.Add(new Supplier
+            foreach (string supplier in suppliers)
             {
-                Name = "Blackwoods",
-            });
-            context.Suppliers.Add(new Supplier
-            {
-                Name = "Siemens",
-            });
+                context.Suppliers.Add(new Supplier { Name = supplier });
+            }
             context.SaveChanges();
         }
 
         static private void AddClients(ApplicationContext context)
         {
-            context.Clients.Add(new Client
+            foreach (string client in clients)
             {
-                Name = "RIO Tinto",
-            });
-            context.Clients.Add(new Client
-            {
-                Name = "Woodside",
-            });
+                context.Clients.Add(new Client { Name = client });
+            }
             context.SaveChanges();
         }
 
         static private void AddProjects(ApplicationContext context)
         {
-            Client rio = context.Clients.FirstOrDefault(x => x.Name == "RIO Tinto");
-            Client wel = context.Clients.FirstOrDefault(x => x.Name == "Woodside");
-
-            context.Projects.Add(new Project
+            Random rnd = new Random();
+            foreach (string project in projects)
             {
-                Name = "Koodaideri",
-                Client = rio
-            });
-            context.Projects.Add(new Project
-            {
-                Name = "KLE",
-                Client = wel
-            });
-            context.Projects.Add(new Project
-            {
-                Name = "Pluto",
-                Client = wel
-            });
+                int i = rnd.Next(0, clients.Length);
+                Client client = context.Clients.FirstOrDefault(x => x.Name == clients[i]);
+                context.Projects.Add(new Project
+                {
+                    Name = project,
+                    Client = client
+                });
+            }
             context.SaveChanges();
         }
 
         static private void AddOrders(ApplicationContext context)
         {
-            Project koodaideri = context.Projects.FirstOrDefault(x => x.Name == "Koodaideri");
-            Project kle = context.Projects.FirstOrDefault(x => x.Name == "KLE");
-            Supplier blackwoods = context.Suppliers.FirstOrDefault(x => x.Name == "Blackwoods");
-            Supplier siemens = context.Suppliers.FirstOrDefault(x => x.Name == "Siemens");
-            context.Orders.Add(new Order
+            Random rnd = new Random();
+            foreach (string order in orders)
             {
-                Description = "Valves",
-                Project = koodaideri,
-                Supplier = blackwoods,
-            });
-            context.Orders.Add(new Order
-            {
-                Description = "Pumps",
-                Project = koodaideri,
-                Supplier = siemens,
-            });
-            context.Orders.Add(new Order
-            {
-                Description = "Motors",
-                Project = kle,
-                Supplier = blackwoods,
-            });
-            context.Orders.Add(new Order
-            {
-                Description = "Pipe Fabrication",
-                Project = kle,
-                Supplier = siemens,
-            });
+                int i = rnd.Next(0, suppliers.Length);
+                Supplier supplier = context.Suppliers.FirstOrDefault(x => x.Name == suppliers[i]);
+                i = rnd.Next(0, projects.Length);
+                Project project = context.Projects.FirstOrDefault(x => x.Name == projects[i]);
+                context.Orders.Add(new Order
+                {
+                    Number = "PO-" + rnd.Next(0, 1000).ToString().PadLeft(6, '0'),
+                    Description = order,
+                    RequisitionNumber = "REQ" + rnd.Next(0, 1000).ToString().PadLeft(6, '0'),
+                    ResponsibleEngineer = engineers[rnd.Next(0, engineers.Length - 1)],
+                    AwardDate = DateTime.Now.AddDays(rnd.Next(0, 30)),
+                    Project = project,
+                    Supplier = supplier
+                });
+            }
             context.SaveChanges();
         }
     }

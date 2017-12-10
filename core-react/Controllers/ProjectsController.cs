@@ -49,6 +49,9 @@ namespace core_react.Controllers
                 return NotFound();
             }
 
+            // crude way of doing this
+            //project.Client = _context.Clients.FirstOrDefault(c => c.Id == project.ClientId);
+
             return Ok(project);
         }
 

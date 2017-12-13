@@ -3,35 +3,55 @@ import React, {
 } from 'react'
 import {
   Spin,
-  Table,
   Form,
   Input,
+  Card, 
+  Checkbox,
   message
 } from 'antd'
-import {
-  Header,
-  Wrapper,
-  Side,
-  Body
-} from '../../components/Layout'
 import FormToolbar, {
   defaultFormItemLayout
-} from '../../components/FormHelper'
+} from 'components/FormHelper'
+import CRUDHelper from '../../components/CRUDHelper'
 import {
   fetchRoles,
   fetchRole,
+  fetchRolePermissions,
   createRole,
   updateRole,
   deleteRole
 } from './api'
+import { fetchPermissions } from 'containers/permissions/api'
+import styled from 'styled-components'
 
-const FormItem = Form.Item;
+const FormItem = Form.Item
+const CheckboxGroup = Checkbox.Group
+
+const PermissionsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  height: 60vh;
+`
+const PermissionsCard = styled(Card)`
+  width: 250px;
+  flex: 1;
+  border-radius: 2px;
+  display: inline-block;
+  margin: 1rem;
+  position: relative;
+`
+
+// const Permission = styled(Checkbox)`
+//   padding: 5px;
+// `
 
 class Roles extends Component {
   constructor(props) {
     super(props);
-    this.rowSelected = this.rowSelected.bind(this)
-    this.rowClassName = this.rowClassName.bind(this)
+    this.fields = ['name']
     this.columns = [
       {
         title: 'Name',
@@ -43,39 +63,65 @@ class Roles extends Component {
   }
 
   state = {
-    loading: true,
-    spinMessage: null,
     roles: [],
-    role: {}
+    role: {},
+    permissions: [],
+    groups: [],
+    rolePermissions: [],
+    tableMessage: 'Loading roles...',
   }
 
   componentWillMount() {
     fetchRoles()
-      .then(res => this.setState({ 
-        roles: res.data,
-        loading: false 
-       }) )
+      .then(res => { 
+        let roles = res.data
+        fetchPermissions()
+        .then(res => {
+          let permissions = res.data
+          const groupDescriptions = [...new Set(permissions.map(p => p.group))]
+          const groups = []
+          for (let i in groupDescriptions) {
+            let groupPermissions = permissions.filter(p => p.group === groupDescriptions[i])
+            groups.push({
+              name: groupDescriptions[i],
+              permissions: groupPermissions.map(p => p.description)
+            })
+          }
+          console.log('groups', groups)
+          this.setState({ 
+            roles,
+            permissions,
+            groups,
+            tableMessage: null
+          }) 
+        })
+      })
       .catch(err => message.error(err))
   }
 
-  rowSelected(record, index, event) {
-    if (!this.props.form.isFieldsTouched(['name']))
-    {
-      this.setState({spinMessage: 'Loading role details...'})
-      fetchRole(record.id)
-        .then(res => this.setState({ 
-          role: res.data,
-          spinMessage: null 
-        }))
-        .catch(err => {
-          this.setState({spinMessage: null})
-          message.error(err)
-        })
-    } else {
-      if (record.id !== this.state.role.id) {
-        message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
-      }
-    }
+  selectRole = (id) => {
+    this.setState({formMessage: 'Loading role details...'})
+    fetchRole(id)
+    .then(res => {
+      var role = res.data
+      fetchRolePermissions(id)
+      .then(res => {
+        // let rolePermissions = res.data
+        //   this.state.rolePermissions.map(p => {
+        //     let group = this.state.groups.find(g => g.name == p.group)
+        //     group.selected = [...group.selected, p.name]
+        //  })
+        this.setState({
+          role,
+          rolePermissions: res.data,
+          formMessage: null
+        }) 
+      })
+    })
+    .catch(err => {
+      this.setState({formMessage: null})
+      message.error(err)
+    })
   }
 
   handleSubmit(data, fields, mode) {
@@ -102,6 +148,17 @@ class Roles extends Component {
 
   handleProress(message) {
     this.setState({spinMessage: message})
+  }
+
+  handleSelect = (record, index, event) => {
+    if (!this.props.form.isFieldsTouched(this.fields))
+    {
+      this.selectRole(record.id)
+    } else {
+      if (record.id !== this.state.role.id) {
+        message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
+      }
+    }
   }
 
   renderForm() {
@@ -137,33 +194,66 @@ class Roles extends Component {
     )
   }
 
-  rowClassName(record, index) {
-    return record.id === this.state.role.id ? 'SelectedRow'  : null;
+  onChange = (e) => {
+    console.log(e)
+    // this.setState({
+    //   checkedList,
+    //   indeterminate: !!checkedList.length && (checkedList.length < plainOptions.length),
+    //   checkAll: checkedList.length === plainOptions.length,
+    // });
+  }
+  onCheckAllChange = (e) => {
+    console.log(e)
+    // this.setState({
+    //   checkedList: e.target.checked ? plainOptions : [],
+    //   indeterminate: false,
+    //   checkAll: e.target.checked,
+    // });
+  }
+
+  renderPermissions() {
+    return (
+      <PermissionsContainer>
+        { this.state.groups.map(group =>
+          <PermissionsCard
+            key={group.id}
+            value={group.name} 
+            extra={group.name !== 'General' ? <Checkbox onChange={this.onCheckAllChange}>All</Checkbox> : null }
+            title={group.name} 
+            bordered={true}>
+            <CheckboxGroup 
+              options={group.permissions}
+              onChange={this.onChange} />
+          </PermissionsCard>
+        )}
+      </PermissionsContainer>
+    )
   }
 
   render() {
+    const navigationTable = {
+      dataSource: this.state.roles,
+      columns: this.columns
+    }
     return (
-      <div>
-        <Header>
-          <h1>Role Maintenance</h1>
-        </Header>
-        <Wrapper>
-          <Side>
-            <Spin tip="Loading roles..." spinning={this.state.loading}>
-              <Table
-                columns={this.columns}
-                dataSource={this.state.roles}
-                rowKey="id"
-                pagination={{ pageSize: 10 }}
-                onRowClick={this.rowSelected}
-                rowClassName={this.rowClassName} />
-            </Spin>
-          </Side>
-          <Body>
-            {this.renderForm()}
-          </Body>
-        </Wrapper>
-      </div>
+      <CRUDHelper 
+        form={this.props.form}
+        header="Role Maintenance"
+        fields={this.fields}
+        rowKey="id"
+        searchText="Search by role name..."
+        path={this.props.location.pathname}
+        currentRecord={this.state.role}
+        navigationTable={navigationTable}
+        sideMessage={this.state.tableMessage}
+        bodyMessage={this.state.formMessage}
+        search={this.state.search}
+        filter={this.state.filter}
+        onSelect={this.handleSelect}
+        params={this.props.match.params}>
+        {this.renderForm()}
+        {this.renderPermissions()}
+      </CRUDHelper>
     );
   }
 }

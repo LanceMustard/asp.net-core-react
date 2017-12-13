@@ -18,6 +18,7 @@ namespace Core.React.Models
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Permission> Permissions { get; set; }
+        public DbSet<Core.React.Models.RolePermission> RolePermission { get; set; }
 
         // Testing 
         public DbSet<Employee> Employees { get; set; }
@@ -27,6 +28,9 @@ namespace Core.React.Models
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<Project> Projects { get; set; }
+        public DbSet<DocumentCode> DocumentCodes { get; set; }
+        public DbSet<Core.React.Models.PackageTemplate> PackageTemplate { get; set; }
+        public DbSet<Core.React.Models.PackageTemplateDocumentCode> PackageTemplateDocumentCodes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -48,6 +52,12 @@ namespace Core.React.Models
                 .WithMany(p => p.Projects)
                 .HasForeignKey(c => c.ClientId);
 
+            // DocumentCode has many DocumentCodes
+            //modelBuilder.Entity<DocumentCode>()
+            //    .HasMany(d => d.Children)
+            //    .WithOne(d => d.Parent)
+            //    .HasForeignKey(d => d.ParentId);
+
             //    modelBuilder.Entity<Employee>().ToTable("Employee");
             //    modelBuilder.Entity<User>().ToTable("User");
             //    modelBuilder.Entity<Supplier>().ToTable("Supplier");
@@ -62,5 +72,7 @@ namespace Core.React.Models
             //        .HasMany(p => p.Orders)
             //        .Map(m => m.MapKey(p => p.Id, "ProjectId"));
         }
+
+
     }
 }

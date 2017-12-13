@@ -153,4 +153,25 @@ namespace core_react.Controllers
         }
     }
 
+    [Route("api/Project/Users")]
+    [Produces("application/json")]
+    public class ProjectUsersController : Controller
+    {
+        private readonly ApplicationContext _context;
+
+        public ProjectUsersController(ApplicationContext context)
+        {
+            _context = context;
+            InitializeData.BuildDataset(context);
+        }
+
+        // GET: api/Project/Users
+        [HttpGet("{id}")]
+        public List<User> GetUsers([FromRoute] int id)
+        {
+            List<User> users = (from o in _context.Users select o).ToList();
+            return users;
+        }
+    }
+
 }

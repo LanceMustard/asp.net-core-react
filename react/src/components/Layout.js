@@ -1,27 +1,43 @@
-import styled  from 'styled-components';
+import styled, {css}  from 'styled-components';
 
 export const Header = styled.div`
   background-color: #a6a6a6;
 
-  > h1 {
-    padding-left: 20px;
-    color: #595959;
-    text-shadow: 0.5px 0.5px;
+  > button {
+    margin: 0px 5px 0px 5px;
+    background-color: transparent;
+    vertical-align: middle;
   }
 `
+export const Title = styled.span`
+  font-size: 24px;
+  padding-left: 10px;
+  color: #595959;
+  text-shadow: 0.5px 0.5px;
+  height: 100%;
+  vertical-align: middle;
+`
+
 export const Wrapper = styled.div`
   display: flex;
   box-shadow: 2px 2px;
 `
 export const Side = styled.div`
-  min-width: 400px;
   min-height: 600px;
   margin: 10px;
+  width: ${props => props.sideWidth ? props.sideWidth : '400px'};
+  display: block;
+
+  ${props => props.inlineCollapsed && css`
+    display: none;
+  `}
 `
+
 export const Body = styled.div`
-  margin-top: 20px;  
+  margin-top: 10px;  
   min-width: 600px;
   min-height: 600px;
+  padding: 0px 10px 0px 10px;
 `
 
 export const FormToolbar = styled.div`

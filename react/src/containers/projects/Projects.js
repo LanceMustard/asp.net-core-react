@@ -2,13 +2,16 @@ import React, {
   Component
 } from 'react'
 import {
+  Tabs,
   Form,
   Input,
   Table,
   Select,
+  Button,
   message
 } from 'antd'
 import Moment from 'react-moment'
+import styled from 'styled-components'
 import FormHelper, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
@@ -18,14 +21,21 @@ import {
   fetchProjects,
   fetchProject,
   fetchProjectOrders,
+  fetchProjectUsers,
   createProject,
   updateProject,
   deleteProject
 } from './api'
 import { fetchClients } from '../clients/api'
 
+const TabPane = Tabs.TabPane
 const FormItem = Form.Item
 const Option = Select.Option
+
+const RightAlignedDiv=styled.div`
+  float: right;
+  padding-left: 20px;
+`
 
 class Projects extends Component {
   constructor(props) {
@@ -38,6 +48,7 @@ class Projects extends Component {
     project: {},
     orders: [],
     clients: [],
+    users: [],
     tableMessage: 'Loading projects...',
     formMessage: null,
   }
@@ -62,7 +73,7 @@ class Projects extends Component {
       })
       .catch(err => {
         this.setState({tableMessage: null})
-        message.error(err)
+        message.error(JSON.stringify(err))
       })
   }
 
@@ -90,12 +101,17 @@ class Projects extends Component {
         let  project = this.handleForeignFields(res.data)
         fetchProjectOrders(id)
         .then(res => {
-          this.setState({
-            project,
-            orders: res.data,
-            formMessage: null
-          }) 
-        })
+          let orders = res.data
+          fetchProjectUsers(id)
+          .then (res => {
+            this.setState({
+              project,
+              orders, 
+              users: res.data,
+              formMessage: null
+            }) 
+          })
+          })
     })
     .catch(err => {
       this.setState({formMessage: null})
@@ -210,21 +226,16 @@ class Projects extends Component {
     ]
     let orderColumns = [
       {
-        title: 'Orders',
+        title: 'Order Number',
+        dataIndex: 'number',
+        key: 'number',
+        sorter: (a, b) => a.number.length - b.number.length,
+      },
+      {
+        title: 'Description',
         dataIndex: 'description',
         key: 'description',
         sorter: (a, b) => a.description.length - b.description.length,
-      },
-      {
-        key: 'action',
-        render: (text, record) => (
-          <span>
-            <BreadcrumbLink 
-              from={`/projects/${this.state.project.id}`} 
-              to={`/orders/${record.id}`}
-              description={this.state.project.name} />
-          </span>
-        )
       },
       {
         title: 'Engineer',
@@ -244,9 +255,40 @@ class Projects extends Component {
         render: (text, record) => (
           <span>
             <BreadcrumbLink 
-              from={`/suppliers/${this.state.supplier.id}`} 
+              from={`/projects/${this.state.project.id}`} 
               to={`/orders/${record.id}`}
-              description={this.state.supplier.name} />
+              description={this.state.project.name} />
+          </span>
+        )
+      }
+    ]
+    let userColumns = [
+      {
+        title: 'Name',
+        dataIndex: 'name',
+        key: 'name',
+        sorter: (a, b) => a.name.length - b.name.length,
+      }, {
+        title: 'Role',
+        dataIndex: 'role',
+        key: 'role',
+        filters: [
+          { text: 'Admin', value: 'Admin' },
+          { text: 'User', value: 'User' },
+          { text: 'Read Only', value: 'Read Only' }
+        ],
+        onFilter: (value, record) => record.role.indexOf(value) === 0,
+        sorter: (a, b) => a.role.length - b.role.length
+      },
+      {
+        key: 'action',
+        render: (text, record) => (
+          <span>
+            <Button type="primary" icon="delete">Remove User</Button> 
+            <BreadcrumbLink 
+              from={`/projects/${this.state.project.id}`} 
+              to={`/users/${record.id}`}
+              description={this.state.project.name} />
           </span>
         )
       }
@@ -269,13 +311,29 @@ class Projects extends Component {
         bodyMessage={this.state.formMessage}
         search={this.state.search}
         filter={this.state.filter}
-        onSelect={this.handleSelect}>
+        onSelect={this.handleSelect}
+        params={this.props.match.params}>
         {this.renderForm()}
-        <Table
-            columns={orderColumns}
-            dataSource={this.state.orders}
-            rowKey="id"
-            pagination={{ pageSize: 10 }}/>
+        <Tabs>
+          <TabPane tab="Packages" key="1">
+            <Table
+              columns={orderColumns}
+              dataSource={this.state.orders}
+              rowKey="id"
+              pagination={{ pageSize: 10 }}/>
+          </TabPane>
+          <TabPane tab="Users" key="2">
+            <RightAlignedDiv>
+              <Button type="primary" icon="file-add">Add User</Button>
+            </RightAlignedDiv>
+            <Table
+              columns={userColumns}
+              dataSource={this.state.users}
+              rowKey="id"
+              pagination={{ pageSize: 10 }}/>
+          </TabPane>
+        </Tabs>
+        
       </CRUDHelper>
     );
   }

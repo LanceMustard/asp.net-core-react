@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-import { ROOT_URL } from '../../actions/environment'
+import { ROOT_URL } from 'actions/environment'
 
 const API = 'api/Roles';
 
@@ -26,5 +26,21 @@ export function updateRole(props) {
 
 export function deleteRole(id) {
   const request = axios.delete(`${ROOT_URL}${API}/${id}`)
+  return request
+}
+
+// Role Permissions
+export function fetchRolePermissions(id) {
+  const request = axios.get(`${ROOT_URL}api/RolePermissions/${id}`)
+  return request
+}
+
+export function createRolePermission(props) {
+  const request = axios.post(`${ROOT_URL}api/RolePermissions`, props)
+  return request
+}
+
+export function deleteRolePermission(id) {
+  const request = axios.delete(`${ROOT_URL}api/RolePermissions/${id}`)
   return request
 }

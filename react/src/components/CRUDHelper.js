@@ -6,11 +6,13 @@ import {
   Spin,
   Icon,
   Input,
+  Button,
   Table
 } from 'antd'
 import { addBreadcrumb, removeBreadcrumb } from './../actions/breadcrumbs'
 import {
   Header,
+  Title,
   Wrapper,
   Side,
   Body
@@ -22,11 +24,23 @@ const Search = Input.Search
 class CRUDWrapper extends Component {
   state = {
     search: this.props.search,
-    filter: null
+    filter: null,
+    collapsed: this.props.params ? this.props.params.id : false
   }
 
   componentWillMount() {
+    this.validateComponentSetup()
     this.props.removeBreadcrumb(this.props.path)
+  }
+
+  validateComponentSetup = () => {
+    if (!this.props.form) console.warn('expecting {form} property assignment <-- suggest {this.props.form} where Form.create() used')
+    if (!this.props.header) console.warn('expecting {header} property assignment')
+    if (!this.props.fields) console.warn('expecting {fields} property assignment <-- suggest array of string')
+    if (!this.props.path) console.warn('expecting {path} property assignment <-- suggest {this.props.location.pathname}')
+    if (!this.props.currentRecord) console.warn('expecting {currentRecord} property assignment <-- suggest a "state" object')
+    if (!this.props.onSelect) console.warn('expecting {onSelect} property assignment')
+    if (!this.props.params) console.warn('expecting {params} property assignment <-- suggest {this.props.match.params}')
   }
 
   handleSearch = (e) => {
@@ -56,6 +70,10 @@ class CRUDWrapper extends Component {
     }
   }
 
+  handleSideToggle = () => {
+    this.setState({ collapsed: !this.state.collapsed })
+  }
+
   render() {
     const searchPrefix = this.state.search ? <Icon type="close-circle" onClick={this.handleResetSearch} /> : null
     // set properties of any child elements within the Body section
@@ -68,11 +86,14 @@ class CRUDWrapper extends Component {
     return (
       <Spin tip={this.props.wrapperMessage} spinning={this.props.wrapperMessage ? true : false}>
         <Header>
-          <h1>{this.props.header}</h1>
+          <Button onClick={this.handleSideToggle}>
+            <Icon type={this.state.collapsed ? 'menu-unfold' : 'menu-fold'} />
+          </Button>
+          <Title>{this.props.header}</Title>
         </Header>
         <Wrapper>
           { this.props.navigationTable || this.props.side ? (
-          <Side>
+          <Side inlineCollapsed={this.state.collapsed} sideWidth={this.props.sideWidth}>
             { this.props.navigationTable ? (
               <Spin tip={this.props.sideMessage} spinning={this.props.sideMessage ? true : false}>
                 <Search

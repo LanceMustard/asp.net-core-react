@@ -77,28 +77,28 @@ class Clients extends Component {
       })
       .catch(err => {
         this.setState({tableMessage: null})
-        message.error(err)
+        console.error(err)
       })
   }
 
   selectClient = (id) => {
     this.setState({formMessage: 'Loading client details...'})
     fetchClient(id)
+    .then(res => {
+      var client = res.data
+      fetchClientProjects(id)
       .then(res => {
-        var client = res.data
-        fetchClientProjects(id)
-        .then(res => {
-          this.setState({
-            client,
-            projects: res.data,
-            formMessage: null
-            }) 
-        })
+        this.setState({
+          client,
+          projects: res.data,
+          formMessage: null
+          }) 
       })
-      .catch(err => {
-        this.setState({formMessage: null})
-        message.error(err)
-      })
+    })
+    .catch(err => {
+      this.setState({formMessage: null})
+      message.error(err)
+    })
   }
 
   handleSelect = (record, index, event) => {
@@ -191,7 +191,8 @@ class Clients extends Component {
         bodyMessage={this.state.formMessage}
         search={this.state.search}
         filter={this.state.filter}
-        onSelect={this.handleSelect}>
+        onSelect={this.handleSelect}
+        params={this.props.match.params}>
         {this.renderForm()}
         <Table
             columns={this.projectColumns}

@@ -19,6 +19,11 @@ export function fetchProjectOrders(id) {
   return request
 }
 
+export function fetchProjectUsers(id) {
+  const request = axios.get(`${ROOT_URL}api/Project/Users/${id}`)
+  return request
+}
+
 export function createProject(props) {
   const request = axios.post(`${ROOT_URL}${API}`, props)
   return request

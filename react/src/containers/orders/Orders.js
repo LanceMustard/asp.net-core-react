@@ -5,23 +5,23 @@ import {
   Form,
   Input,
   Select,
-  DatePicker,
-  message
+  DatePicker
 } from 'antd'
 import moment from 'moment'
 import FormHelper, {
   defaultFormItemLayout
-} from '../../components/FormHelper'
-import CRUDHelper from '../../components/CRUDHelper'
+} from 'components/FormHelper'
+import CRUDHelper from 'components/CRUDHelper'
+import { debug } from 'components/debug'
 import {
   fetchOrders,
   fetchOrder,
   createOrder,
   updateOrder,
   deleteOrder
-} from './api'
-import { fetchProjects } from '../projects/api'
-import { fetchSuppliers } from '../suppliers/api'
+} from 'containers/orders/api'
+import { fetchProjects } from 'containers/projects/api'
+import { fetchSuppliers } from 'containers/suppliers/api'
 
 const FormItem = Form.Item
 const Option = Select.Option
@@ -66,7 +66,7 @@ class Orders extends Component {
       })
       .catch(err => {
         this.setState({tableMessage: null})
-        console.error(err)
+        debug(err)
       })
   }
 
@@ -93,9 +93,7 @@ class Orders extends Component {
     this.setState({formMessage: 'Loading order details...'})
     fetchOrder(id)
       .then(res => {
-        console.log('selectOrder', res.data)
         let order = this.handleForeignFields(res.data)
-        console.log('handleForeignFields', order)
         this.setState({ 
           order,
           formMessage: null
@@ -103,7 +101,7 @@ class Orders extends Component {
       })
       .catch(err => {
         this.setState({formMessage: null})
-        console.error('selectOrder error:', err)
+        debug(err)
       })
   }
 
@@ -112,7 +110,7 @@ class Orders extends Component {
       this.selectOrder(record.id)
     } else {
       if (record.id !== this.state.order.id) {
-        message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
+        debug(`Changes exist. Either save or clear these changes before navigating away from this record`)
       }
     }
   }
@@ -288,6 +286,7 @@ class Orders extends Component {
         rowKey="id"
         searchField="description"
         searchText="Search by order description..."
+        sideWidth="600px"
         path={this.props.location.pathname}
         currentRecord={this.state.order}
         navigationTable={navigationTable}
@@ -295,7 +294,8 @@ class Orders extends Component {
         bodyMessage={this.state.formMessage}
         search={this.state.search}
         filter={this.state.filter}
-        onSelect={this.handleSelect}>
+        onSelect={this.handleSelect}
+        params={this.props.match.params}>
         {this.renderForm()}
       </CRUDHelper>
     )

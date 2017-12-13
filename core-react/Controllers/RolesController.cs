@@ -5,13 +5,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Cors;
 using Core.React.Models;
 using Core.React.Testing;
 
 namespace core_react.Controllers
 {
-    [EnableCors("CustomCORS")]
     [Produces("application/json")]
     [Route("api/Roles")]
     public class RolesController : Controller
@@ -126,4 +124,6 @@ namespace core_react.Controllers
             return _context.Roles.Any(e => e.Id == id);
         }
     }
+
+
 }

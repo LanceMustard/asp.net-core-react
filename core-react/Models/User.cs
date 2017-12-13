@@ -41,4 +41,17 @@ namespace Core.React.Models
         [Required(ErrorMessage = "A role name is required")]
         public string Name { get; set; }
     }
+
+    public class RolePermission
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+        public int RoleId { get; set; }
+        [ForeignKey("RoleId")]
+        public Role Role { get; set; }
+        public int PermissionId { get; set; }
+        [ForeignKey("PermissionId")]
+        public Permission Permission { get; set; }
+    }
 }

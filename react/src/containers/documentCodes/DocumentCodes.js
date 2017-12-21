@@ -6,9 +6,12 @@ import {
   Input,
   Select,
   Table,
-  message
+  Row,
+  Col,
+  Button
 } from 'antd'
 import _ from 'lodash'
+import styled from 'styled-components'
 import FormHelper, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
@@ -17,13 +20,20 @@ import BreadcrumbLink from '../../components/BreadcrumbLink'
 import {
   fetchDocumentCodes,
   fetchDocumentCode,
+  fetchDocumentCodesByLibrary,
   createDocumentCode,
   updateDocumentCode,
   deleteDocumentCode
 } from './api'
+import { fetchLibraries } from 'containers/libraries/api'
+import { debug } from 'components/debug'
 
 const FormItem = Form.Item
 const Option = Select.Option
+
+const SelectLibrary = styled(Select)`
+  width: 100%;
+`
 
 class DocumentCodes extends Component {
   constructor(props) {
@@ -49,19 +59,38 @@ class DocumentCodes extends Component {
     flatDocumentCodes: [],
     documentCodes: [],
     documentCode: {},
+    libraries: [],
     children: [],
-    tableMessage: 'Loading Document Codes...',
+    tableMessage: 'Loading Reference Libraries...',
     formMessage: null,
   }
 
   componentWillMount() {
     // load inital record if one is specified in the params
     if (this.props.match.params.id) this.selectDocumentCode(this.props.match.params.id)
-    // populate documentCode tables
-    fetchDocumentCodes()
+    fetchLibraries()
+      .then(res => this.setState({ 
+        libraries: res.data,
+        tableMessage: null 
+      }) )
+      .catch(err => debug(err))
+  }
+
+  // buildDataSet = (documentCodes) => {
+  //   _(documentCodes).forEach(f => {
+  //     f.children = _(documentCodes).filter(g => g.parentId === f.id).value()
+  //   })
+  //   let data = _(documentCodes).filter(f => f.parentId === null).value()
+  //   return data
+  // }
+
+  selectLibrary = (id) => {
+      // populate documentCode tables
+      this.setState({ tableMessage: 'Loading Document Codes...' })
+      fetchDocumentCodesByLibrary(id)
       .then(res => {
         console.log('fetchDocumentCodes', res.data)
-        let documentCodes = this.buildDataSet(res.data)
+        let documentCodes = res.data //this.buildDataSet(res.data)
         console.log('documentCodes', documentCodes)
         this.setState({
           flatDocumentCodes: res.data,
@@ -73,14 +102,6 @@ class DocumentCodes extends Component {
         this.setState({tableMessage: null})
         console.error(err)
       })
-  }
-
-  buildDataSet = (documentCodes) => {
-    _(documentCodes).forEach(f => {
-      f.children = _(documentCodes).filter(g => g.parentId === f.id).value()
-    })
-    let data = _(documentCodes).filter(f => f.parentId === 0).value()
-    return data
   }
 
   selectDocumentCode = (id) => {
@@ -107,7 +128,7 @@ class DocumentCodes extends Component {
       this.selectDocumentCode(record.id)
     } else {
       if (record.id !== this.state.documentCode.id) {
-        message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
+        debug(`Changes exist. Either save or clear these changes before navigating away from this record`)
       }
     }
   }
@@ -192,9 +213,20 @@ class DocumentCodes extends Component {
                 message: 'Please input a Parent Document Code!', 
               }],
             })(
+              // <Row gutter={8}>
+              //   <Col span={22}>
+              //     <Select placeholder="Select parent document code">
+              //       <Option value={0} key={0}>No parent</Option>
+              //       {this.state.documentCodes.map(s => s.parentId === null ? <Option value={s.id} key={s.id}>{s.code} - {s.description}</Option> : null)}
+              //     </Select>
+              //   </Col>
+              //   <Col span={2}>
+              //     <Button onClick={() => this.selectDocumentCode(this.state.documentCode.parentId)}>Edit</Button>
+              //   </Col>
+              // </Row>
               <Select placeholder="Select parent document code">
                 <Option value={0} key={0}>No parent</Option>
-                {this.state.documentCodes.map(s => s.parentId === 0 ? <Option value={s.id} key={s.id}>{s.code} - {s.description}</Option> : null)}
+                {this.state.documentCodes.map(s => s.parentId === null ? <Option value={s.id} key={s.id}>{s.code} - {s.description}</Option> : null)}
               </Select>
             )}
           </FormItem>
@@ -221,10 +253,7 @@ class DocumentCodes extends Component {
         key: 'action',
         render: (text, record) => (
           <span>
-            <BreadcrumbLink 
-              from={`/documentcodes/${this.state.documentCode.id}`} 
-              to={`/documentcodes/${record.id}`}
-              description={this.state.documentCode.code} />
+            <Button onClick={() => this.selectDocumentCode(record.id)}>Edit</Button>
           </span>
         )
       }
@@ -249,6 +278,11 @@ class DocumentCodes extends Component {
         search={this.state.search}
         filter={this.state.filter}
         onSelect={this.handleSelect}
+        side={(
+          <SelectLibrary placeholder="Select reference library" onChange={this.selectLibrary}>
+            {this.state.libraries.map(l => <Option value={l.id} key={l.id}>{l.name}</Option>)}
+          </SelectLibrary>
+        )}
         params={this.props.match.params}>
         {this.renderForm()}
         <Table

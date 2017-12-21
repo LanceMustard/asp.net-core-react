@@ -9,6 +9,11 @@ export function fetchDocumentCodes() {
   return request
 }
 
+export function fetchDocumentCodesByLibrary(id) {
+  const request = axios.get(`${ROOT_URL}api/Library/DocumentCodes/${id}`)
+  return request
+}
+
 export function fetchDocumentCode(id) {
   const request = axios.get(`${ROOT_URL}${API}/${id}`)
   return request

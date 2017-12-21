@@ -18,6 +18,7 @@ import Suppliers from './suppliers/Suppliers'
 import Orders from './orders/Orders'
 import DocumentCodes from './documentCodes/DocumentCodes'
 import PackageTemplates from './packageTemplates/PackageTemplates'
+import Libraries from './libraries/Libraries'
 import { saveUser, loadUser } from './../localStorage'
 
 const FullScreen = styled.div`
@@ -62,6 +63,7 @@ class App extends Component {
           <Route path="/orders/:id?" component={Orders}/>
           <Route path="/documentcodes/:id?" component={DocumentCodes}/>
           <Route path="/packagetempletes/:id?" component={PackageTemplates}/>
+          <Route path="/libraries/:id?" component={Libraries}/>
         </Affix>
         <Affix offsetBottom={0}>
           <AppFooter />

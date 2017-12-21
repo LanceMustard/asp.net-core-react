@@ -5,8 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Core.React.Data;
 using Core.React.Models;
-using Core.React.Testing;
+//using Core.React.Testing;
 
 namespace core_react.Controllers
 {
@@ -14,12 +15,12 @@ namespace core_react.Controllers
     [Route("api/Projects")]
     public class ProjectsController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public ProjectsController(ApplicationContext context)
+        public ProjectsController(SupplierPortalContext context)
         {
             _context = context;
-            InitializeData.BuildDataset(context);
+            //InitializeData.BuildDataset(context);
         }
 
         // GET: api/Projects
@@ -136,12 +137,11 @@ namespace core_react.Controllers
     [Produces("application/json")]
     public class ProjectOrdersController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public ProjectOrdersController(ApplicationContext context)
+        public ProjectOrdersController(SupplierPortalContext context)
         {
             _context = context;
-            InitializeData.BuildDataset(context);
         }
 
         // GET: api/Project/Orders
@@ -153,25 +153,78 @@ namespace core_react.Controllers
         }
     }
 
-    [Route("api/Project/Users")]
-    [Produces("application/json")]
-    public class ProjectUsersController : Controller
-    {
-        private readonly ApplicationContext _context;
+    //[Route("api/Project/Users")]
+    //[Produces("application/json")]
+    //public class ProjectUsersController : Controller
+    //{
+    //    private readonly SupplierPortalContext _context;
 
-        public ProjectUsersController(ApplicationContext context)
-        {
-            _context = context;
-            InitializeData.BuildDataset(context);
-        }
+    //    public ProjectUsersController(SupplierPortalContext context)
+    //    {
+    //        _context = context;
+    //    }
 
-        // GET: api/Project/Users
-        [HttpGet("{id}")]
-        public List<User> GetUsers([FromRoute] int id)
-        {
-            List<User> users = (from o in _context.Users select o).ToList();
-            return users;
-        }
-    }
+    //    // GET: api/Project/Users
+    //    [HttpGet("{id}")]
+    //    public List<ProjectUser> GetUsers([FromRoute] int id)
+    //    {
+    //        List<ProjectUser> users = (from u in _context.ProjectUsers where u.ProjectId == id select u)
+    //            .Include(u => u.Project)
+    //            .Include(u => u.Role)
+    //            .Include(u => u.User)
+    //            .ToList();
+    //        return users;
+    //    }
+
+    //    // POST: api/Project/Users/5
+    //    [HttpPost("{id}")]
+    //    public async Task<IActionResult> PostProjectUsers([FromRoute] int id, [FromBody] string[] users)
+    //    {
+    //        Project project = _context.Projects.FirstOrDefault(x => x.Id == id);
+    //        // remove deleted users from project
+    //        List<ProjectUser> existingProjectUsers = (from pu in _context.ProjectUsers where pu.ProjectId == id select pu).ToList();
+    //        foreach (ProjectUser projectUser in existingProjectUsers)
+    //        {
+    //            string userId = users.FirstOrDefault(x => x == projectUser.UserId.ToString());
+    //            if (string.IsNullOrEmpty(userId))
+    //            {
+    //                // existing user can not be found in new user collection, so delete it
+    //                _context.ProjectUsers.Remove(projectUser);
+    //            }
+    //        }
+    //        // add users to project
+    //        Role role = _context.Roles.FirstOrDefault(x => x.Id == project.DefaultRoleId);
+    //        List<ProjectUser> projectUsers = new List<ProjectUser>();
+    //        foreach (string userId in users)
+    //        {
+    //            ProjectUser user = _context.ProjectUsers.FirstOrDefault(x => x.UserId.ToString() == userId);
+    //            if (user == null)
+    //            {
+    //                user = new ProjectUser
+    //                {
+    //                    Project = project,
+    //                    User = _context.Users.FirstOrDefault(x => x.Id.ToString() == userId),
+    //                    Role = role
+    //                };
+    //            }
+    //            projectUsers.Add(user);
+    //        }
+    //        project.ProjectUsers = projectUsers;
+    //        _context.Entry(project).State = EntityState.Modified;
+
+    //        try
+    //        {
+    //            await _context.SaveChangesAsync();
+
+    //        }
+    //        catch (DbUpdateConcurrencyException)
+    //        {
+    //            throw;
+    //        }
+    //        projectUsers = GetUsers(id);
+
+    //        return Ok(projectUsers);
+    //    }
+    //}
 
 }

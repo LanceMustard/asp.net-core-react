@@ -19,6 +19,11 @@ export function fetchPackageTemplateDocumentCodes(id) {
   return request
 }
 
+export function fetchPackageTemplatesByLibrary(id) {
+  const request = axios.get(`${ROOT_URL}api/Library/PackageTemplates/${id}`)
+  return request
+}
+
 export function createPackageTemplate(props) {
   const request = axios.post(`${ROOT_URL}${API}`, props)
   return request

@@ -5,8 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Core.React.Data;
 using Core.React.Models;
-using Core.React.Testing;
+//using Core.React.Testing;
 
 namespace core_react.Controllers
 {
@@ -14,12 +15,12 @@ namespace core_react.Controllers
     [Route("api/Roles")]
     public class RolesController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public RolesController(ApplicationContext context)
+        public RolesController(SupplierPortalContext context)
         {
             _context = context;
-            InitializeData.BuildDataset(context);
+            //InitializeData.BuildDataset(context);
         }
 
         // GET: api/Roles

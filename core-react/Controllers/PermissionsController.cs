@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
+using Core.React.Data;
 using Core.React.Models;
-using Core.React.Testing;
+//using Core.React.Testing;
 
 namespace core_react.Controllers
 {
@@ -16,12 +17,12 @@ namespace core_react.Controllers
     [Route("api/Permissions")]
     public class PermissionsController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public PermissionsController(ApplicationContext context)
+        public PermissionsController(SupplierPortalContext context)
         {
             _context = context;
-            InitializeData.BuildDataset(context);
+            //InitializeData.BuildDataset(context);
         }
 
         // GET: api/Permissions

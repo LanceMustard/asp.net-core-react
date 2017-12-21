@@ -20,6 +20,7 @@ namespace Core.React.Models
         public string Email { get; set; }
         [CheckIn(new string[] { "Admin", "User", "Read Only" })]
         public string Role { get; set; }
+        public ICollection<ProjectUser> ProjectUsers { get; set; }
     }
 
     public class Permission
@@ -40,6 +41,7 @@ namespace Core.React.Models
         public int Id { get; set; }
         [Required(ErrorMessage = "A role name is required")]
         public string Name { get; set; }
+        public ICollection<ProjectUser> ProjectUsers { get; set; }
     }
 
     public class RolePermission

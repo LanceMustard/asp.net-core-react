@@ -4,9 +4,10 @@ import React, {
 import {
   Form,
   Input,
-  Table,
-  message
+  Select,
+  Table
 } from 'antd'
+import styled from 'styled-components'
 import FormHelper, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
@@ -16,13 +17,20 @@ import {
   fetchPackageTemplates,
   fetchPackageTemplate,
   fetchPackageTemplateDocumentCodes,
+  fetchPackageTemplatesByLibrary,
   createPackageTemplate,
   updatePackageTemplate,
   deletePackageTemplate
 } from './api'
+import { fetchLibraries } from 'containers/libraries/api'
 import { debug } from 'components/debug'
 
-const FormItem = Form.Item;
+const FormItem = Form.Item
+const Option = Select.Option
+
+const SelectLibrary = styled(Select)`
+  width: 100%;
+`
 
 class PackageTemplates extends Component {
   constructor(props) {
@@ -67,6 +75,7 @@ class PackageTemplates extends Component {
     packageTemplates: [],
     packageTemplate: {},
     documentCodes: [],
+    libraries: [],
     tableMessage: 'Loading Package Templates...',
     formMessage: null,
   }
@@ -74,18 +83,29 @@ class PackageTemplates extends Component {
   componentWillMount() {
     // load inital record if one is specified in the params
     if (this.props.match.params.id) this.selectPackageTemplate(this.props.match.params.id)
+    fetchLibraries()
+    .then(res => this.setState({ 
+      libraries: res.data,
+      tableMessage: null 
+    }) )
+    .catch(err => debug(err))
+  }
+
+  selectLibrary = (id) => {
     // populate packageTemplate tables
-    fetchPackageTemplates()
-      .then(res => {
-        this.setState({
-          packageTemplates: res.data,
-          tableMessage: null
-        })
+    fetchPackageTemplatesByLibrary(id)
+    .then(res => {
+      this.setState({
+        packageTemplates: res.data,
+        packageTemplate: {},
+        documentCodes: [],
+        tableMessage: null
       })
-      .catch(err => {
-        this.setState({tableMessage: null})
-        debug(err)
-      })
+    })
+    .catch(err => {
+      this.setState({tableMessage: null})
+      debug(err)
+    })
   }
 
   selectPackageTemplate = (id) => {
@@ -200,6 +220,11 @@ class PackageTemplates extends Component {
         search={this.state.search}
         filter={this.state.filter}
         onSelect={this.handleSelect}
+        side={(
+          <SelectLibrary placeholder="Select reference library" onChange={this.selectLibrary}>
+            {this.state.libraries.map(l => <Option value={l.id} key={l.id}>{l.name}</Option>)}
+          </SelectLibrary>
+        )}
         params={this.props.match.params}>
         {this.renderForm()}
         <Table

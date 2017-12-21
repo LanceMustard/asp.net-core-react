@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
+using Core.React.Data;
 using Core.React.Models;
-using Core.React.Testing;
 
 namespace core_react.Controllers
 {
@@ -16,12 +16,11 @@ namespace core_react.Controllers
     [Route("api/Users")]
     public class UsersController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public UsersController(ApplicationContext context)
+        public UsersController(SupplierPortalContext context)
         {
             _context = context;
-            InitializeData.BuildDataset(context);
         }
 
         // GET: api/Users
@@ -126,4 +125,31 @@ namespace core_react.Controllers
             return _context.Users.Any(e => e.Id == id);
         }
     }
-}
+
+    [EnableCors("CustomCORS")]
+    [Produces("application/json")]
+    [Route("api/User/Projects")]
+    public class UserProjectsController : Controller
+    {
+        private readonly SupplierPortalContext _context;
+
+        public UserProjectsController(SupplierPortalContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/User/Projects
+        [HttpGet("{id}")]
+        public IEnumerable<ProjectUser> GetUserProjects([FromRoute] int id)
+        {
+            return (from pu in _context.ProjectUsers
+                    where pu.UserId == id
+                    select pu)
+                    .Include(p => p.Project)
+                    .Include(r => r.Role)
+                    .Include(u => u.User)
+                    .ToList();
+        }
+    }
+
+    }

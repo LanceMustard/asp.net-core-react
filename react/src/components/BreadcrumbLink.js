@@ -20,13 +20,23 @@ export class BreadcrumbLink extends Component {
 
   }
   render() {
-    return (
-      <RightAlignLink to={this.props.to}>
-        <Button icon="select" onClick={this.handleClick} type="primary">
-          {this.props.label || 'Open'}
-        </Button>
-      </RightAlignLink>
-    )
+    if (this.props.type === "Link") {
+      return (
+        <Link 
+          onClick={this.handleClick}
+          to={this.props.to}>
+          {this.props.label}
+        </Link>
+      )
+    } else {
+      return (
+        <RightAlignLink to={this.props.to}>
+          <Button icon="select" onClick={this.handleClick} type="primary">
+            {this.props.label || 'Open'}
+          </Button>
+        </RightAlignLink>
+      )
+    }
   }
 }
 

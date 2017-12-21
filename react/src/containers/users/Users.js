@@ -5,21 +5,27 @@ import {
   Form,
   Input,
   Select,
+  Table,
+  Tabs,
   message
 } from 'antd'
 import FormHelper, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
+import BreadcrumbLink from 'components/BreadcrumbLink'
 import CRUDHelper from '../../components/CRUDHelper'
 import {
   fetchUsers,
   fetchUser,
+  fetchUserProjects,
   createUser,
   updateUser,
   deleteUser
 } from './api'
+import { debug } from 'components/debug'
 
 const FormItem = Form.Item
+const TabPane = Tabs.TabPane
 const Option = Select.Option
 
 class Users extends Component {
@@ -30,7 +36,7 @@ class Users extends Component {
         title: 'Name',
         dataIndex: 'name',
         key: 'name',
-        sorter: (a, b) => a.name.length - b.name.length,
+        sorter: (a, b) => a.name > b.name ? 1 : b.name > a.name ? -1 : 0
       }, {
         title: 'Role',
         dataIndex: 'role',
@@ -41,7 +47,7 @@ class Users extends Component {
           { text: 'Read Only', value: 'Read Only' }
         ],
         onFilter: (value, record) => record.role.indexOf(value) === 0,
-        sorter: (a, b) => a.role.length - b.role.length
+        sorter: (a, b) => a.role > b.role ? 1 : b.role > a.role ? -1 : 0
       }
     ]
     this.fields = ['name', 'osUser', 'email', 'role']
@@ -51,6 +57,7 @@ class Users extends Component {
     tableMessage: 'Loading users...',
     formMessage: null,
     users: [],
+    userProjects: [],
     user: {role: "Read Only"}
   }
 
@@ -67,21 +74,29 @@ class Users extends Component {
       })
       .catch(err => {
         this.setState({ tableMessage: null }) 
-        message.error(err)
+        debug(err)
       })
   }
 
   selectUser = (id) => {
     this.setState({formMessage: 'Loading user details...'})
     fetchUser(id)
-      .then(res => this.setState({ 
-        user: res.data,
-        formMessage: null 
-      }))
-      .catch(err => {
-        this.setState({formMessage: null})
-        message.error(err)
+    .then(res => { 
+      let user = res.data
+      fetchUserProjects(id)
+      .then(res => {
+        let userProjects = res.data
+        this.setState({ 
+          user,
+          userProjects,
+          formMessage: null
+        })
       })
+    })
+    .catch(err => {
+      this.setState({formMessage: null})
+      debug(err)
+    })
   }
   
   handleSelect = (record, index, event) => {
@@ -109,16 +124,53 @@ class Users extends Component {
     } else if (mode === 'delete') {
       this.setState({
         user: {},
+        userProjects: [],
         users: this.state.users.filter(x => x.id !== data.id),
       })
       
     } else if (mode === 'new') {
-      this.setState({user: { role: "Read Only" }})
+      this.setState({
+        user: { role: "Read Only" },
+        userProjects: []
+      })
     }
   }
 
   handleProgress = (message) => {
     this.setState({formMessage: message})
+  }
+
+  renderUserProjects() {
+    let projectColumns = [
+      {
+        title: 'Project',
+        dataIndex: 'project.name',
+        key: 'project.name',
+        render: (text, record) => (
+          <BreadcrumbLink
+            type="Link"
+            label={record.project.name}
+            from={`/users/${this.state.user.id}`} 
+            to={`/projects/${record.project.id}`}
+            description={this.state.user.name} />
+        ),
+        sorter: (a, b) => a.project.name > b.project.name ? 1 : b.project.name > a.project.name ? -1 : 0
+      },
+      {
+        title: 'Role',
+        dataIndex: 'role.name',
+        key: 'role.name',
+        sorter: (a, b) => a.role.name > b.role.name ? 1 : b.role.name > a.role.name ? -1 : 0
+      }
+    ]
+    return (
+      <Table
+        columns={projectColumns}
+        dataSource={this.state.userProjects}
+        rowKey="id"
+        /* scroll={{ y: 300 }} */
+        pagination={{ pageSize: 10 }}/>
+    )
   }
 
   renderForm() {
@@ -145,49 +197,56 @@ class Users extends Component {
               <Input />
             )}
           </FormItem>
-          <FormItem
-            {...defaultFormItemLayout}
-            label="Operating system user name:">
-            {getFieldDecorator('osUser', {
-              initialValue: this.state.user.osUser,
-              rules: [{ 
-                required: true, 
-                message: 'Please input an operating system user name!', 
-                whitespace: true }],
-            })(
-              <Input />
-            )}
-          </FormItem>
-          <FormItem
-            {...defaultFormItemLayout}
-            label="Email Address:">
-            {getFieldDecorator('email', {
-              initialValue: this.state.user.email,
-              rules: [{ 
-                type: 'email', 
-                message: 'Please input a valid email address!',
-                required: true, 
-                whitespace: true }],
-            })(
-              <Input />
-            )}
-          </FormItem>
-          <FormItem
-            {...defaultFormItemLayout}
-            label="Role:">
-            {getFieldDecorator('role', {
-              initialValue: this.state.user.role,
-              rules: [{ 
-                required: true, 
-                whitespace: true }],
-            })(
-              <Select>
-                <Option value="Admin">Admin</Option>
-                <Option value="User">User</Option>
-                <Option value="Read Only">Read Only</Option>
-              </Select>
-            )}
-          </FormItem>
+          <Tabs>
+            <TabPane tab="Details" key="1">
+              <FormItem
+                {...defaultFormItemLayout}
+                label="Operating system user name:">
+                {getFieldDecorator('osUser', {
+                  initialValue: this.state.user.osUser,
+                  rules: [{ 
+                    required: true, 
+                    message: 'Please input an operating system user name!', 
+                    whitespace: true }],
+                })(
+                  <Input />
+                )}
+              </FormItem>
+              <FormItem
+                {...defaultFormItemLayout}
+                label="Email Address:">
+                {getFieldDecorator('email', {
+                  initialValue: this.state.user.email,
+                  rules: [{ 
+                    type: 'email', 
+                    message: 'Please input a valid email address!',
+                    required: true, 
+                    whitespace: true }],
+                })(
+                  <Input />
+                )}
+              </FormItem>
+              <FormItem
+                {...defaultFormItemLayout}
+                label="Role:">
+                {getFieldDecorator('role', {
+                  initialValue: this.state.user.role,
+                  rules: [{ 
+                    required: true, 
+                    whitespace: true }],
+                })(
+                  <Select>
+                    <Option value="Admin">Admin</Option>
+                    <Option value="User">User</Option>
+                    <Option value="Read Only">Read Only</Option>
+                  </Select>
+                )}
+              </FormItem>
+            </TabPane>
+            <TabPane tab="Project Roles" key="2">
+              {this.renderUserProjects()}
+            </TabPane>
+          </Tabs>
         </Form>
       </FormHelper>
     )

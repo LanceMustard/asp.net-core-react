@@ -43,12 +43,11 @@ class AppMenu extends Component {
             <Menu.Item key="roles"><Link to="/roles">Roles</Link></Menu.Item>
             <Menu.Item key="permissions"><Link to="/permissions">Permissions</Link></Menu.Item>
           </MenuItemGroup>
-          <Menu.Item key="documentcodes"><Link to="/documentcodes">Document Codes</Link></Menu.Item>
-          <Menu.Item key="packagetempletes"><Link to="/packagetempletes">Package Templates</Link></Menu.Item>
-          {/* <Menu.Item key="user-defined-attributes"><Link to="/employees">User Defined Attributes</Link></Menu.Item>
-          <Menu.Item key="evaluators">Evaluators</Menu.Item>
-          <Menu.Item key="data-writers">Data Writers</Menu.Item>
-          <Menu.Item key="settings">Settings</Menu.Item>*/}
+          <MenuItemGroup key="referencelibrary" title="Reference Library">
+            <Menu.Item key="libraries"><Link to="/libraries">Library Maintenance</Link></Menu.Item>
+            <Menu.Item key="documentcodes"><Link to="/documentcodes">Document Codes</Link></Menu.Item>
+            <Menu.Item key="packagetempletes"><Link to="/packagetempletes">Package Templates</Link></Menu.Item>
+          </MenuItemGroup>
         </SubMenu>
         <SubMenu title={<span><Icon type="caret-down" />Supplier Portal</span>}>
           <Menu.Item key="client"><Link to="/clients">Client Maintenace</Link></Menu.Item>
@@ -56,25 +55,6 @@ class AppMenu extends Component {
           <Menu.Item key="supplier"><Link to="/suppliers">Supplier Maintenance</Link></Menu.Item>
           <Menu.Item key="order"><Link to="/orders">Order Maintenance</Link></Menu.Item>
         </SubMenu>
-        {/* <SubMenu title={<span><Icon type="caret-down" />Company</span>}>
-          <Menu.Item key="asset">Asset Maintenance</Menu.Item>
-          <Menu.Item key="project2">Project Maintenance</Menu.Item>
-        </SubMenu>
-        <SubMenu title={<span><Icon type="caret-down" />Library</span>}>
-          <Menu.Item key="library">Library Maintenance</Menu.Item>
-          <Menu.Item key="discipline">Discipline Maintenance</Menu.Item>
-          <Menu.Item key="class">Class Maintenance</Menu.Item>
-          <Menu.Item key="attribute-group">Attribute Group Maintenance</Menu.Item>
-          <Menu.Item key="attribute">Attribute Maintenance</Menu.Item>
-          <Menu.Item key="uom">UOM Maintenance</Menu.Item>
-          <Menu.Item key="enumerated-list">Enumerated List Maintenance</Menu.Item>
-          <Menu.Item key="data-type">Data Type Maintenance</Menu.Item>
-        </SubMenu>
-        <SubMenu title={<span><Icon type="caret-down" />Authoring</span>}>
-          <Menu.Item key="application">Application Maintenance</Menu.Item>
-          <Menu.Item key="mappings">Mappings</Menu.Item>
-          <Menu.Item key="authoring-matrix">Authoring Matrix</Menu.Item> 
-        </SubMenu> */}
         <AppSettings>
           { this.props.user.name }
           <UserAvatar icon="user" />

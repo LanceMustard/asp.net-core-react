@@ -21,7 +21,12 @@ export const Title = styled.span`
 export const Wrapper = styled.div`
   display: flex;
   box-shadow: 2px 2px;
+
+  ${props => props.inlineCollapsed && css`
+    justify-content: center;
+  `}
 `
+
 export const Side = styled.div`
   min-height: 600px;
   margin: 10px;
@@ -35,7 +40,7 @@ export const Side = styled.div`
 
 export const Body = styled.div`
   margin-top: 10px;  
-  min-width: 600px;
+  min-width: 800px;
   min-height: 600px;
   padding: 0px 10px 0px 10px;
 `

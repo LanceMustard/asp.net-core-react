@@ -242,6 +242,7 @@ class Roles extends Component {
         fields={this.fields}
         rowKey="id"
         searchText="Search by role name..."
+        searchField="name"
         path={this.props.location.pathname}
         currentRecord={this.state.role}
         navigationTable={navigationTable}

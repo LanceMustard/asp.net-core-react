@@ -25,5 +25,21 @@ namespace Core.React.Models
         public Supplier Supplier { get; set; }
         [ForeignKey("ProjectId")]
         public Project Project { get; set; }
+        public virtual ICollection<OrderDataRequirement> OrderDataRequirement { get; set; }
     }
+
+    public class OrderDataRequirement
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+        public int DocumentCodeId { get; set; }
+        [ForeignKey("DocumentCodeId")]
+        public DocumentCode DocumentCode { get; set; }
+        public int OrderId { get; set; }
+        [ForeignKey("OrderId")]
+        public Order Order { get; set; }
+
+    }
+
 }

@@ -5,8 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Core.React.Data;
 using Core.React.Models;
-using Core.React.Testing;
+//using Core.React.Testing;
 
 namespace core_react.Controllers
 {
@@ -14,12 +15,12 @@ namespace core_react.Controllers
     [Route("api/Clients")]
     public class ClientsController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public ClientsController(ApplicationContext context)
+        public ClientsController(SupplierPortalContext context)
         {
             _context = context;
-            InitializeData.BuildDataset(context);
+            //InitializeData.BuildDataset(context);
         }
 
         // GET: api/Clients
@@ -129,12 +130,11 @@ namespace core_react.Controllers
     [Produces("application/json")]
     public class ClientProjectsController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public ClientProjectsController(ApplicationContext context)
+        public ClientProjectsController(SupplierPortalContext context)
         {
             _context = context;
-            InitializeData.BuildDataset(context);
         }
 
         // GET: api/Client/Projects

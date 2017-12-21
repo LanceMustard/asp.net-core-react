@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Core.React.Data;
 using Core.React.Models;
 
 namespace core_react.Controllers
@@ -13,9 +14,9 @@ namespace core_react.Controllers
     [Route("api/DocumentCodes")]
     public class DocumentCodesController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public DocumentCodesController(ApplicationContext context)
+        public DocumentCodesController(SupplierPortalContext context)
         {
             _context = context;
         }
@@ -24,12 +25,6 @@ namespace core_react.Controllers
         [HttpGet]
         public IEnumerable<DocumentCode> GetDocumentCodes()
         {
-            //IEnumerable<DocumentCode> data = _context.DocumentCodes
-            //       .Include(x => x.Children)
-            //       .AsEnumerable()
-            //       .Where(x => x.Parent == null)
-            //       .ToList();
-            //return data;
             return _context.DocumentCodes;
         }
 
@@ -128,25 +123,5 @@ namespace core_react.Controllers
             return _context.DocumentCodes.Any(e => e.Id == id);
         }
     }
-
-    //[Produces("application/json")]
-    //[Route("api/DocumentCodeChildren")]
-    //public class DocumentCodeChildrenController : Controller
-    //{
-    //    private readonly ApplicationContext _context;
-
-    //    public DocumentCodeChildrenController(ApplicationContext context)
-    //    {
-    //        _context = context;
-    //    }
-
-    //    // GET: api/DocumentCodeChildren/5
-    //    [HttpGet("{id}")]
-    //    public List<DocumentCode> GetDocumentCodeChildren([FromRoute] int id)
-    //    {
-    //        List<DocumentCode> documentCodes = (from o in _context.DocumentCodes where o.ParentId == id select o).ToList();
-    //        return documentCodes;
-    //    }
-    //}
 
     }

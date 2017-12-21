@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.StaticFiles;
+using Core.React.Data;
 using Core.React.Models;
 
 namespace Core.React
@@ -27,13 +28,17 @@ namespace Core.React
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApplicationContext>(opt => opt.UseInMemoryDatabase("EmployeesDB"));
-            services.AddMvc();
+            //services.AddDbContext<ApplicationContext>(opt => opt.UseInMemoryDatabase("EmployeesDB"));
+            services.AddDbContext<SupplierPortalContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddMvc().AddJsonOptions(options =>
+            {
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+            });
             // determine Cross-Origin Request policy
             //if (Environment.GetEnvironmentVariable("PORT") == null )
             //{
-                // development environment only, allow any origin to access the API
-                services.AddCors(o => o.AddPolicy("CustomCORS", builder =>
+            // development environment only, allow any origin to access the API
+            services.AddCors(o => o.AddPolicy("CustomCORS", builder =>
                 {
                     builder.AllowAnyOrigin()
                            .AllowAnyMethod()

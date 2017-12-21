@@ -28,3 +28,12 @@ export function deleteOrder(id) {
   const request = axios.delete(`${ROOT_URL}${API}/${id}`)
   return request
 }
+
+// Order Data Requirements
+
+const dataRequirementsApi = 'api/OrderDataRequirements'
+
+export function fetchOrderDataRequirements(id) {
+  const request = axios.get(`${ROOT_URL}${dataRequirementsApi}/${id}`)
+  return request
+}

@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
+using Core.React.Data;
 using Core.React.Models;
-using Core.React.Testing;
+//using Core.React.Testing;
 
 namespace core_react.Controllers
 {
@@ -16,12 +17,12 @@ namespace core_react.Controllers
     [Route("api/Suppliers")]
     public class SuppliersController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public SuppliersController(ApplicationContext context)
+        public SuppliersController(SupplierPortalContext context)
         {
             _context = context;
-            InitializeData.BuildDataset(context);
+            //InitializeData.BuildDataset(context);
         }
 
         // GET: api/Suppliers
@@ -131,12 +132,11 @@ namespace core_react.Controllers
     [Produces("application/json")]
     public class SupplierOrdersController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public SupplierOrdersController(ApplicationContext context)
+        public SupplierOrdersController(SupplierPortalContext context)
         {
             _context = context;
-            InitializeData.BuildDataset(context);
         }
 
         // GET: api/Supplier/Orders

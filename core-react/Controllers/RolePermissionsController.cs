@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Core.React.Data;
 using Core.React.Models;
 
 namespace core_react.Controllers
@@ -13,9 +14,9 @@ namespace core_react.Controllers
     [Route("api/RolePermissions")]
     public class RolePermissionsController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public RolePermissionsController(ApplicationContext context)
+        public RolePermissionsController(SupplierPortalContext context)
         {
             _context = context;
         }

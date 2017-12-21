@@ -5,6 +5,9 @@ import {
   Form,
   Input,
   Select,
+  Tabs,
+  Table,
+  Button,
   DatePicker
 } from 'antd'
 import moment from 'moment'
@@ -18,12 +21,14 @@ import {
   fetchOrder,
   createOrder,
   updateOrder,
-  deleteOrder
+  deleteOrder,
+  fetchOrderDataRequirements
 } from 'containers/orders/api'
 import { fetchProjects } from 'containers/projects/api'
 import { fetchSuppliers } from 'containers/suppliers/api'
 
 const FormItem = Form.Item
+const TabPane = Tabs.TabPane
 const Option = Select.Option
 
 class Orders extends Component {
@@ -37,6 +42,8 @@ class Orders extends Component {
     order: {},
     projects: [],
     suppliers: [],
+    dataRequirements: [],
+    addDataRequirementMode: false,
     tableMessage: 'Loading projects...',
     formMessage: null,
     columns: this.columns
@@ -92,17 +99,23 @@ class Orders extends Component {
   selectOrder = (id) => {
     this.setState({formMessage: 'Loading order details...'})
     fetchOrder(id)
+    .then(res => {
+      let order = this.handleForeignFields(res.data)
+      fetchOrderDataRequirements(id)
       .then(res => {
-        let order = this.handleForeignFields(res.data)
+        let dataRequirements = res.data
+        console.log('dataRequirements', dataRequirements)
         this.setState({ 
           order,
+          dataRequirements,
           formMessage: null
         }) 
       })
-      .catch(err => {
-        this.setState({formMessage: null})
-        debug(err)
-      })
+    })
+    .catch(err => {
+      this.setState({formMessage: null})
+      debug(err)
+    })
   }
 
   handleSelect = (record, index, event) => {
@@ -142,6 +155,53 @@ class Orders extends Component {
     this.setState({formMessage: message})
   }
 
+  handleDeleteDataRequirement = (record) => {
+    console.log('handleDeleteDataRequirement', record)
+  }
+
+  toggleAddDataRequirementMode = () => {
+    this.setState({addDataRequirementMode: !this.state.addDataRequirementMode})
+  }
+  
+  renderDataRequirements = () => {
+    let userDataRequirements = [
+      {
+        title: 'Code',
+        dataIndex: 'documentCode.code',
+        key: 'documentCode.code',
+        sorter: (a, b) => a.documentCode.code > b.documentCode.code ? 1 : b.documentCode.code > a.documentCode.code ? -1 : 0,
+      },
+      {
+        title: 'Description',
+        dataIndex: 'documentCode.description',
+        key: 'documentCode.description',
+        sorter: (a, b) => a.documentCode.description > b.documentCode.description ? 1 : b.documentCode.description > a.documentCode.description ? -1 : 0,
+      },
+      {
+        key: 'action',
+        title: (
+            <Button type="primary" icon="file-add" onClick={this.toggleAddDataRequirementMode.bind(this)} disabled={this.state.order.id === undefined ? true : false}>Add Data Requirements</Button>
+        ),
+        render: (record) => (
+          <span>
+            <Button icon="delete" onClick={() => this.handleDeleteDataRequirement(record)}>Remove</Button> 
+          </span>
+        )
+      }
+    ]
+    return (
+      <Table
+        columns={userDataRequirements}
+        dataSource={this.state.dataRequirements}
+        rowKey="id"
+        pagination={{ pageSize: 5 }}
+        footer={(data => 
+          <Button type="primary" icon="database" onClick={this.toggleAddDataRequirementMode.bind(this)} disabled={this.state.order.id === undefined ? true : false}>Assign Template</Button>
+        )}
+      />
+    )
+  }
+
   renderForm() {
     const { getFieldDecorator } = this.props.form;
 
@@ -167,83 +227,92 @@ class Orders extends Component {
               <Input />
             )}
           </FormItem>
-          <FormItem
-            {...defaultFormItemLayout}
-            label="Description:">
-            {getFieldDecorator('description', {
-              initialValue: this.state.order.description,
-              rules: [{ 
-                required: true, 
-                message: 'Please input an order description!', 
-                whitespace: true }],
-            })(
-              <Input />
-            )}
-          </FormItem>
-          <FormItem
-            {...defaultFormItemLayout}
-            label="Project:">
-            {getFieldDecorator('projectId', {
-              initialValue: this.state.order.projectId,
-              // initialValue: this.state.order.project ? this.state.order.project.name : '',
-              rules: [{ 
-                required: true, 
-                message: 'Please select a project!' 
-              }],
-            })(
-              <Select placeholder="Select project">
-                {this.state.projects.map(p=> <Option value={p.id} key={p.id}>{p.name}</Option>)}
-              </Select>
-            )}
-          </FormItem>
-          <FormItem
-            {...defaultFormItemLayout}
-            label="Supplier:">
-            {getFieldDecorator('supplierId', {
-              initialValue: this.state.order.supplierId,
-              // initialValue: this.state.order.supplier ? this.state.order.supplier.name : '',
-              rules: [{ 
-                required: true, 
-                message: 'Please select a supplier!' 
-              }],
-            })(
-              <Select placeholder="Select supplier">
-                {this.state.suppliers.map(s => <Option value={s.id} key={s.id}>{s.name}</Option>)}
-              </Select>
-            )}
-          </FormItem>
-          <FormItem
-            {...defaultFormItemLayout}
-            label="Requisition Number:">
-            {getFieldDecorator('requisitionNumber', {
-              initialValue: this.state.order.requisitionNumber,
-            })(
-              <Input />
-            )}
-          </FormItem>
-          <FormItem
-            {...defaultFormItemLayout}
-            label="Responsible Engineer:">
-            {getFieldDecorator('responsibleEngineer', {
-              initialValue: this.state.order.responsibleEngineer,
-            })(
-              <Input />
-            )}
-          </FormItem>
-          <FormItem
-            {...defaultFormItemLayout}
-            label="Award Date:">
-            {getFieldDecorator('awardDate', {
-              // initialValue: (<Moment format="YYYY/MM/DD">{this.state.order.awardDate}</Moment>),
-              initialValue: moment(this.state.order.awardDate), 
-              rules: [{ 
-                type: 'object', 
-                message: 'Please select an award date!' 
-              }]
-            })(
-              <DatePicker />
-            )}
-          </FormItem>
+          <Tabs>
+            <TabPane tab="Details" key="1">
+              <FormItem
+                {...defaultFormItemLayout}
+                label="Description:">
+                {getFieldDecorator('description', {
+                  initialValue: this.state.order.description,
+                  rules: [{ 
+                    required: true, 
+                    message: 'Please input an order description!', 
+                    whitespace: true }],
+                })(
+                  <Input />
+                )}
+              </FormItem>
+              <FormItem
+                {...defaultFormItemLayout}
+                label="Project:">
+                {getFieldDecorator('projectId', {
+                  initialValue: this.state.order.projectId,
+                  // initialValue: this.state.order.project ? this.state.order.project.name : '',
+                  rules: [{ 
+                    required: true, 
+                    message: 'Please select a project!' 
+                  }],
+                })(
+                  <Select placeholder="Select project">
+                    {this.state.projects.map(p=> <Option value={p.id} key={p.id}>{p.name}</Option>)}
+                  </Select>
+                )}
+              </FormItem>
+              <FormItem
+                {...defaultFormItemLayout}
+                label="Supplier:">
+                {getFieldDecorator('supplierId', {
+                  initialValue: this.state.order.supplierId,
+                  // initialValue: this.state.order.supplier ? this.state.order.supplier.name : '',
+                  rules: [{ 
+                    required: true, 
+                    message: 'Please select a supplier!' 
+                  }],
+                })(
+                  <Select placeholder="Select supplier">
+                    {this.state.suppliers.map(s => <Option value={s.id} key={s.id}>{s.name}</Option>)}
+                  </Select>
+                )}
+              </FormItem>
+              <FormItem
+                {...defaultFormItemLayout}
+                label="Requisition Number:">
+                {getFieldDecorator('requisitionNumber', {
+                  initialValue: this.state.order.requisitionNumber,
+                })(
+                  <Input />
+                )}
+              </FormItem>
+              <FormItem
+                {...defaultFormItemLayout}
+                label="Responsible Engineer:">
+                {getFieldDecorator('responsibleEngineer', {
+                  initialValue: this.state.order.responsibleEngineer,
+                })(
+                  <Input />
+                )}
+              </FormItem>
+              <FormItem
+                {...defaultFormItemLayout}
+                label="Award Date:">
+                {getFieldDecorator('awardDate', {
+                  // initialValue: (<Moment format="YYYY/MM/DD">{this.state.order.awardDate}</Moment>),
+                  initialValue: moment(this.state.order.awardDate), 
+                  rules: [{ 
+                    type: 'object', 
+                    message: 'Please select an award date!' 
+                  }]
+                })(
+                  <DatePicker />
+                )}
+              </FormItem>
+            </TabPane>
+            <TabPane tab="Data Requirements" key="2">
+              {this.renderDataRequirements()}
+            </TabPane>
+            <TabPane tab="Document Schedule" key="3">
+            </TabPane>
+          </Tabs>
         </Form>
       </FormHelper>
     )

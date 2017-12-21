@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Core.React.Data;
 using Core.React.Models;
 
 namespace core_react.Controllers
@@ -13,9 +14,9 @@ namespace core_react.Controllers
     [Route("api/PackageTemplates")]
     public class PackageTemplatesController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public PackageTemplatesController(ApplicationContext context)
+        public PackageTemplatesController(SupplierPortalContext context)
         {
             _context = context;
         }
@@ -24,7 +25,7 @@ namespace core_react.Controllers
         [HttpGet]
         public IEnumerable<PackageTemplate> GetPackageTemplate()
         {
-            return _context.PackageTemplate;
+            return _context.PackageTemplates;
         }
 
         // GET: api/PackageTemplates/5
@@ -36,7 +37,7 @@ namespace core_react.Controllers
                 return BadRequest(ModelState);
             }
 
-            var packageTemplate = await _context.PackageTemplate.SingleOrDefaultAsync(m => m.Id == id);
+            var packageTemplate = await _context.PackageTemplates.SingleOrDefaultAsync(m => m.Id == id);
 
             if (packageTemplate == null)
             {
@@ -90,7 +91,7 @@ namespace core_react.Controllers
                 return BadRequest(ModelState);
             }
 
-            _context.PackageTemplate.Add(packageTemplate);
+            _context.PackageTemplates.Add(packageTemplate);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetPackageTemplate", new { id = packageTemplate.Id }, packageTemplate);
@@ -105,13 +106,13 @@ namespace core_react.Controllers
                 return BadRequest(ModelState);
             }
 
-            var packageTemplate = await _context.PackageTemplate.SingleOrDefaultAsync(m => m.Id == id);
+            var packageTemplate = await _context.PackageTemplates.SingleOrDefaultAsync(m => m.Id == id);
             if (packageTemplate == null)
             {
                 return NotFound();
             }
 
-            _context.PackageTemplate.Remove(packageTemplate);
+            _context.PackageTemplates.Remove(packageTemplate);
             await _context.SaveChangesAsync();
 
             return Ok(packageTemplate);
@@ -119,7 +120,7 @@ namespace core_react.Controllers
 
         private bool PackageTemplateExists(int id)
         {
-            return _context.PackageTemplate.Any(e => e.Id == id);
+            return _context.PackageTemplates.Any(e => e.Id == id);
         }
     }
 
@@ -127,18 +128,19 @@ namespace core_react.Controllers
     [Route("api/PackageTemplate/DocumentCodes")]
     public class PackageTemplatesDocumentCodesController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly SupplierPortalContext _context;
 
-        public PackageTemplatesDocumentCodesController(ApplicationContext context)
+        public PackageTemplatesDocumentCodesController(SupplierPortalContext context)
         {
             _context = context;
         }
 
          // GET: api/PackageTemplate/DocumentCodes/5
         [HttpGet("{id}")]
-        public List<PackageTemplateDocumentCode> GetPackageTemplateDocumentCodes([FromRoute] int id)
+        public List<PackageTemplateItem> GetPackageTemplateDocumentCodes([FromRoute] int id)
         {
-            List<PackageTemplateDocumentCode> packageTemplateDocumentCodes = (from p in _context.PackageTemplateDocumentCodes where p.PackageTemplateId == id select p).Include(x => x.DocumentCode).ToList();
+            List<PackageTemplateItem> packageTemplateDocumentCodes = (from p in _context.PackageTemplateDocumentCodes where p.PackageTemplateId == id select p).Include(x => x.DocumentCode).ToList();
+            //List<PackageTemplateItem> packageTemplateDocumentCodes = (from p in _context.PackageTemplateDocumentCodes where p.PackageTemplateId == id select p).ToList();
             return packageTemplateDocumentCodes;
         }
     }

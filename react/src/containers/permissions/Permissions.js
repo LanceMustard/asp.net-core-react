@@ -2,20 +2,13 @@ import React, {
   Component
 } from 'react'
 import {
-  Table,
   Form,
-  Input,
-  message
+  Input
 } from 'antd'
-import {
-  Header,
-  Wrapper,
-  Side,
-  Body
-} from '../../components/Layout'
 import FormToolbar, {
   defaultFormItemLayout
 } from '../../components/FormHelper'
+import CRUDHelper from '../../components/CRUDHelper'
 import {
   fetchPermissions,
   fetchPermission,
@@ -23,14 +16,13 @@ import {
   updatePermission,
   deletePermission
 } from './api'
+import { debug } from 'components/debug'
 
 const FormItem = Form.Item;
 
 class Permissions extends Component {
   constructor(props) {
     super(props);
-    this.rowSelected = this.rowSelected.bind(this)
-    this.rowClassName = this.rowClassName.bind(this)
     this.columns = [
       {
         title: 'Group',
@@ -44,7 +36,8 @@ class Permissions extends Component {
         key: 'description',
         sorter: (a, b) => a.description.length - b.description.length,
       } 
-    ];
+    ]
+    this.fields = ['description', 'group']
   }
 
   state = {
@@ -55,23 +48,30 @@ class Permissions extends Component {
   componentWillMount() {
     fetchPermissions()
       .then(res => this.setState({ permissions: res.data }) )
-      .catch(err => message.error(err))
+      .catch(err => debug(err))
   }
 
-  rowSelected(record, index, event) {
-    if (!this.props.form.isFieldsTouched(['description']))
+  selectPermission = (id) => {
+    fetchPermission(id)
+    .then(res => this.setState({ 
+      permission: res.data,
+      formMessage: null
+    }) )
+    .catch(err => debug(err))
+  }
+
+  handleSelect = (record, index, event) => {
+    if (!this.props.form.isFieldsTouched([this.fields]))
     {
-      fetchPermission(record.id)
-        .then(res => this.setState({ permission: res.data }) )
-        .catch(err => message.error(err))
+      this.selectPermission(record.id)
     } else {
       if (record.id !== this.state.permission.id) {
-        message.error(`Changes exist. Either save or clear these changes before navigating away from this record`)
+        debug(`Changes exist. Either save or clear these changes before navigating away from this record`)
       }
     }
   }
 
-  handleSubmit(data, fields, mode) {
+  handleSubmit = (data, fields, mode) => {
     if (mode === 'update') {
       this.setState({
           permission: data, 
@@ -91,6 +91,10 @@ class Permissions extends Component {
     } else if (mode === 'new') {
       this.setState({permission: {}})
     }
+  }
+
+  handleProress(message) {
+    this.setState({spinMessage: message})
   }
 
   renderForm() {
@@ -115,7 +119,7 @@ class Permissions extends Component {
               initialValue: this.state.permission.description,
               rules: [{ 
                 required: true, 
-                message: 'Please input a permission description!', 
+                message: 'Please input a permission d escription!', 
                 whitespace: true }],
             })(
               <Input />
@@ -139,31 +143,30 @@ class Permissions extends Component {
     )
   }
 
-  rowClassName(record, index) {
-    return record.id === this.state.permission.id ? 'SelectedRow'  : null;
-  }
-
   render() {
+    const navigationTable = {
+      dataSource: this.state.permissions,
+      columns: this.columns
+    }
     return (
-      <div>
-        <Header>
-          <h1>Permission Maintenance</h1>
-        </Header>
-        <Wrapper>
-          <Side>
-            <Table
-              columns={this.columns}
-              dataSource={this.state.permissions}
-              rowKey="id"
-              pagination={{ pageSize: 10 }}
-              onRowClick={this.rowSelected}
-              rowClassName={this.rowClassName} />
-          </Side>
-          <Body>
-            {this.renderForm()}
-          </Body>
-        </Wrapper>
-      </div>
+      <CRUDHelper 
+        form={this.props.form}
+        header="Permission Maintenance"
+        fields={this.fields}
+        rowKey="id"
+        searchText="Search by permission description..."
+        searchField="description"
+        path={this.props.location.pathname}
+        currentRecord={this.state.permission}
+        navigationTable={navigationTable}
+        sideMessage={this.state.tableMessage}
+        bodyMessage={this.state.formMessage}
+        search={this.state.search}
+        filter={this.state.filter}
+        onSelect={this.handleSelect}
+        params={this.props.match.params}>
+        {this.renderForm()}
+      </CRUDHelper>
     );
   }
 }

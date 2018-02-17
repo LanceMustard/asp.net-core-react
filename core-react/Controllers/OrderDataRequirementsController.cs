@@ -90,18 +90,23 @@ namespace core_react.Controllers
         }
 
         // POST: api/OrderDataRequirements
-        [HttpPost]
-        public async Task<IActionResult> PostOrderDataRequirement([FromBody] OrderDataRequirement orderDataRequirement)
+        //[HttpPost]
+        [HttpPost("{id}")]
+        //public async Task<IActionResult> PostOrderDataRequirement([FromBody] OrderDataRequirement orderDataRequirement)
+        public async Task<IActionResult> PostOrderDataRequirement([FromRoute] int id, [FromBody] List<DocumentCode> documentCodes)
         {
-            if (!ModelState.IsValid)
+            List<OrderDataRequirement> retval = new List<OrderDataRequirement>();
+            foreach (DocumentCode documentCode in documentCodes)
             {
-                return BadRequest(ModelState);
+                OrderDataRequirement orderDataRequirement = new OrderDataRequirement() { DocumentCodeId = documentCode.Id, OrderId = id };
+                orderDataRequirement.DocumentCode = _context.DocumentCodes.FirstOrDefault(x => x.Id == orderDataRequirement.DocumentCodeId);
+                orderDataRequirement.Order = _context.Orders.FirstOrDefault(x => x.Id == orderDataRequirement.OrderId);
+                _context.OrderDataRequirements.Add(orderDataRequirement);
+                retval.Add(orderDataRequirement);
             }
-
-            _context.OrderDataRequirements.Add(orderDataRequirement);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetOrderDataRequirement", new { id = orderDataRequirement.Id }, orderDataRequirement);
+            return Ok(retval);
         }
 
         // DELETE: api/OrderDataRequirements/5

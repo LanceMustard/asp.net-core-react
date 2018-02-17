@@ -514,7 +514,7 @@ namespace Core.React.Data
                 {
                     if (documentCode.ParentId != null)
                     {
-                        context.PackageTemplateDocumentCodes.Add(new PackageTemplateItem { PackageTemplate = template, DocumentCode = documentCode });
+                        context.PackageTemplateItems.Add(new PackageTemplateItem { PackageTemplate = template, DocumentCode = documentCode });
                     }
                 }
             }

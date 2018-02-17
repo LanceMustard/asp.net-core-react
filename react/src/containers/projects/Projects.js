@@ -18,6 +18,7 @@ import FormHelper, {
 } from 'components/FormHelper'
 import BreadcrumbLink from 'components/BreadcrumbLink'
 import CRUDHelper from 'components/CRUDHelper'
+import AutofitTable from 'components/AutofitTable'
 import RecordSelector from 'components/RecordSelector'
 import {
   fetchProjects,
@@ -229,7 +230,7 @@ class Projects extends Component {
 
   toggleAddUserMode = () => {
     if (!this.state.addUserMode) {
-      if (this.state.users.length == 0) {
+      if (this.state.users.length === 0) {
         // if this is the first time, load users from server
         this.setState({formMessage: 'Loading users...'})
         fetchUsers()
@@ -291,8 +292,8 @@ class Projects extends Component {
         projectUsers = [...projectUsers, res.data]
         if (count === i + 1) {
           // if this is the last save to be done close add user mode and update the project Users state
-          projectUsers.sort((a,b) => (a.user.name > b.user.name) ? 1 : ((b.user.name > a.user.name) ? -1 : 0));
-          this.toggleAddUserMode();
+          projectUsers.sort((a,b) => (a.user.name > b.user.name) ? 1 : ((b.user.name > a.user.name) ? -1 : 0))
+          this.toggleAddUserMode()
           this.setState({
             projectUsers,
             formMessage: null
@@ -519,10 +520,13 @@ class Projects extends Component {
       }
     ]
     return (
-      <Table
+      <AutofitTable
+        title='Project Packages'
         columns={orderColumns}
         dataSource={this.state.orders}
         rowKey="id"
+        rowHeight={41}
+        style={{height: '55vh'}}
         pagination={{ pageSize: 10 }}/>
     )
   }
@@ -563,7 +567,7 @@ class Projects extends Component {
         onUpdate={updateProject}
         onProgress={this.handleProgress}
         record={this.state.project}>
-        <Form onSubmit={this.handleSubmit.bind(this)}>
+        <Form style={{height: '75vh'}} onSubmit={this.handleSubmit.bind(this)}>
           <FormItem
             {...defaultFormItemLayout}
             label="Name:">

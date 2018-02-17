@@ -76,8 +76,9 @@ class RecordSelector extends Component {
         }
       )
     }
+    // pagination={this.props.pageSize ? { pageSize: this.props.pageSize } : { pageSize: 10 }}
     return (
-      <RecordSelectorDiv width={this.props.width}>
+      <RecordSelectorDiv width={this.props.width || '100%'}>
         <Search
           prefix={searchPrefix} 
           placeholder={this.props.searchText ? this.props.searchText : "Search"}
@@ -85,10 +86,14 @@ class RecordSelector extends Component {
           onChange={this.handleSearch.bind(this)}
           onPressEnter={this.handleSearch.bind(this)}/>
         <Table
+          footer={this.props.footer}
+          header={this.props.header}
           columns={this.props.columns}
           dataSource={this.state.filter || this.props.dataSource}
+          pagination={this.props.pagination || { pageSize: 5 }}
+          size={this.props.size || 'default'}
           rowKey={this.props.rowKey ? this.props.rowKey : "id"}
-          pagination={this.props.pageSize ? { pageSize: this.props.pageSize } : { pageSize: 10 }}
+          scroll={this.props.scroll || { x: null, y: null}}
           onRowClick={this.handleRowClick}/>
       </RecordSelectorDiv>
     )

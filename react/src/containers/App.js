@@ -41,7 +41,7 @@ class App extends Component {
   renderLogin() {
     return (
       <FullScreen>
-        <h1>Core-React Application</h1>
+        <h1>Supplier Portal</h1>
         <Login onSubmit={this.loginUser.bind(this)} />
       </FullScreen>
     )
@@ -65,9 +65,9 @@ class App extends Component {
           <Route path="/packagetempletes/:id?" component={PackageTemplates}/>
           <Route path="/libraries/:id?" component={Libraries}/>
         </Affix>
-        <Affix offsetBottom={0}>
+        {/* <Affix offsetBottom={0}>
           <AppFooter />
-        </Affix>
+        </Affix> */}
       </FullScreen>
     )
   }

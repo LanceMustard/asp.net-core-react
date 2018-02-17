@@ -50,3 +50,8 @@ export const FormToolbar = styled.div`
   width: 100%;
   justify-content: space-between;
 `
+export const TableFooter = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+`

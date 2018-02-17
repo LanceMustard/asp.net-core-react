@@ -37,3 +37,13 @@ export function fetchOrderDataRequirements(id) {
   const request = axios.get(`${ROOT_URL}${dataRequirementsApi}/${id}`)
   return request
 }
+
+export function createOrderDataRequirements(id, props) {
+  const request = axios.post(`${ROOT_URL}${dataRequirementsApi}/${id}`, props)
+  return request
+}
+
+export function deleteOrderDataRequirement(id) {
+  const request = axios.delete(`${ROOT_URL}${dataRequirementsApi}/${id}`)
+  return request
+}

@@ -8,28 +8,63 @@ import {
   Tabs,
   Table,
   Button,
-  DatePicker
+  Icon,
+  Modal,
+  DatePicker,
+  Calendar,
+  Radio,
+  Badge
 } from 'antd'
 import moment from 'moment'
+import styled from 'styled-components'
 import FormHelper, {
   defaultFormItemLayout
 } from 'components/FormHelper'
 import CRUDHelper from 'components/CRUDHelper'
 import { debug } from 'components/debug'
+import confirm from 'components/confirm'
+import RecordSelector from 'components/RecordSelector'
+import { TableFooter } from 'components/Layout'
 import {
   fetchOrders,
   fetchOrder,
   createOrder,
   updateOrder,
   deleteOrder,
-  fetchOrderDataRequirements
+  fetchOrderDataRequirements,
+  createOrderDataRequirements,
+  deleteOrderDataRequirement
 } from 'containers/orders/api'
+import {
+  fetchPackageTemplates,
+  fetchPackageTemplateItems
+} from 'containers/packageTemplates/api'
 import { fetchProjects } from 'containers/projects/api'
 import { fetchSuppliers } from 'containers/suppliers/api'
+import { fetchDocumentCodes } from 'containers/documentCodes/api'
 
 const FormItem = Form.Item
 const TabPane = Tabs.TabPane
 const Option = Select.Option
+const RadioButton = Radio.Button
+const RadioGroup = Radio.Group
+const { TextArea } = Input;
+
+class MaximiseButton extends Component {
+  handleMaximise = () => {
+    if (this.props.onMaximise) {
+      this.props.onMaximise()
+    }
+  }
+  
+  render() {
+    return (
+      <Button style={{float: 'right'}} onClick={this.handleMaximise}>
+        <Icon type='scan' />
+      </Button>
+    )
+  }
+}
 
 class Orders extends Component {
   constructor(props) {
@@ -42,11 +77,19 @@ class Orders extends Component {
     order: {},
     projects: [],
     suppliers: [],
+    documentCodes: [],
+    nonAssignedDocumentCodes: [],
+    packageTemplates: [],
+    addPackageTemplates: [],
+    dataRequirement: {},
     dataRequirements: [],
-    addDataRequirementMode: false,
+    addDataRequirements: [],
+    dataRequirementMode: 'default',  // add / template / edit
     tableMessage: 'Loading projects...',
     formMessage: null,
-    columns: this.columns
+    columns: this.columns,
+    maximiseDataRequirements: false,
+    collapsed: this.props.match.params.id ? true : false
   }
 
   componentWillMount() {
@@ -104,7 +147,7 @@ class Orders extends Component {
       fetchOrderDataRequirements(id)
       .then(res => {
         let dataRequirements = res.data
-        console.log('dataRequirements', dataRequirements)
+        dataRequirements.sort((a, b) => a.documentCode.code > b.documentCode.code ? 1 : b.documentCode.code > a.documentCode.code ? -1 : 0)
         this.setState({ 
           order,
           dataRequirements,
@@ -156,14 +199,265 @@ class Orders extends Component {
   }
 
   handleDeleteDataRequirement = (record) => {
-    console.log('handleDeleteDataRequirement', record)
+    let confirmMessage = this.props.deleteMessage || `Please confirm that you want to remove data requirement  "${record.documentCode.code} - ${record.documentCode.description}" from this order?`
+    confirm(confirmMessage, { title: "Delete confirmation" })
+    .then((ok) => {
+      this.setState({formMessage: 'Removing data requirement...'})
+      deleteOrderDataRequirement(record.id)
+      .then(res => {
+        this.setState({
+          dataRequirements: this.state.dataRequirements.filter(d => d.id !== res.data.id),
+          formMessage: null
+        })
+      })
+      .catch(err => {
+        debug(err)
+        this.setState({formMessage: null})
+      })
+    },
+    (cancel) => { /* do nothing */ })
   }
 
-  toggleAddDataRequirementMode = () => {
-    this.setState({addDataRequirementMode: !this.state.addDataRequirementMode})
+  setDataRequirementMode = (mode) => {
+    if (mode == 'add' && this.state.documentCodes.length === 0) {
+      // populate document codes array
+      this.setState({formMessage: 'Loading document codes...'})
+      fetchDocumentCodes(this.state.order.project.libraryId)
+      .then(res => {
+        // Build and sort the documentCodes array
+        let documentCodes = res.data.filter(x => x.parentId !== null)
+        documentCodes.sort((a, b) => a.code > b.code ? 1 : b.code > a.code ? -1 : 0) 
+        // Update nonAssignedDocumentCodes array and filter out all currently assigned document codes (can not add a user twice)
+        let nonAssignedDocumentCodes = documentCodes
+        this.state.dataRequirements.map(o => {
+          nonAssignedDocumentCodes = nonAssignedDocumentCodes.filter(x => x.id !== o.documentCode.id) 
+        })
+
+        this.setState({
+          documentCodes,
+          nonAssignedDocumentCodes,
+          formMessage: null,
+          dataRequirementMode: mode,
+          addDataRequirements: []
+        })
+      })
+      .catch(err => {
+        debug(err)
+        this.setState({formMessage: null})
+      })
+    }
+    else if (mode === 'template' && this.state.packageTemplates.length === 0) {
+      this.setState({formMessage: 'Loading package tempates...'})
+      fetchPackageTemplates(this.state.order.project.libraryId)
+      .then(res => {
+        this.setState({
+          dataRequirementMode: mode,
+          packageTemplates: res.data,
+          formMessage: null
+        })
+      })
+      .catch(err => {
+        debug(err)
+        this.setState({formMessage: null})
+      })
+    }
+    else {
+      // Update nonAssignedDocumentCodes array and filter out all currently assigned document codes (can not add a user twice)
+      let nonAssignedDocumentCodes = this.state.documentCodes
+      this.state.dataRequirements.map(o => {
+        nonAssignedDocumentCodes = nonAssignedDocumentCodes.filter(x => x.id !== o.documentCode.id) 
+      })
+      this.setState({
+        dataRequirementMode: mode,
+        addDataRequirements: [],
+        nonAssignedDocumentCodes 
+      })
+    }
   }
-  
-  renderDataRequirements = () => {
+
+  handleAddDataRequirements = (data) => {
+    this.setState({formMessage: 'Updating data requirements...'})
+    createOrderDataRequirements(this.state.order.id, this.state.addDataRequirements)
+    .then(res => {
+      let dataRequirements = [...this.state.dataRequirements, ...res.data]
+      dataRequirements.sort((a,b) => (a.documentCode.code > b.documentCode.code) ? 1 : ((b.documentCode.code > a.documentCode.code) ? -1 : 0))
+      this.setDataRequirementMode('default')
+      this.setState({
+        dataRequirements,
+        formMessage: null
+      })
+    })
+    .catch(err => {
+        debug(err)
+        this.setState({formMessage: null})  
+    })
+  }
+
+  handleEditDataRequirement = (record) => {
+    this.setState({
+      dataRequirement: record,
+      dataRequirementMode: 'edit'
+    })
+  }
+
+  handleCancelAddDataRequirements = () => {
+    this.setDataRequirementMode('default')
+  }
+
+  handleAddDataRequirementsChange = (dataRequirements) => {
+    this.setState({addDataRequirements: dataRequirements})
+  }
+
+  handleUpdateSelectTemplates =() => {
+    this.setState({formMessage: 'Updating data requirements...'})
+    this.state.packageTemplates.map(template => {
+      fetchPackageTemplateItems(template.id)
+      .then(res => {
+        let addDataRequirements = []
+        res.data.map(templateDocumentCode => {
+          addDataRequirements.push({ id: templateDocumentCode.documentCodeId })
+        })
+        this.setState({addDataRequirements})
+        this.handleAddDataRequirements(addDataRequirements)
+      })
+      .catch(err => {
+        debug(err)
+        this.setState({formMessage: null})
+      })
+    })
+  }
+
+  handleSelectTemplatesChange =(packageTemplates) => {
+    this.setState({addPackageTemplates: packageTemplates})
+  }
+
+  handleCancelSelectTemplates = () => {
+    this.setDataRequirementMode('default')
+  }
+
+  handleCancelEditDataRequirement = () => {
+    this.setDataRequirementMode('default')
+  }
+
+  handleOnChangeDataRequirementRequired = (e) => {
+    let dataRequirement = this.state.dataRequirement
+    dataRequirement.required = e.target.value
+    console.log('dataRequirement.required', dataRequirement.required)
+    this.setState({dataRequirement})
+  }
+
+  renderEditDataRequirement = () => {
+    const { getFieldDecorator } = this.props.form
+    let content = null
+    if (this.state.dataRequirement.required === 'Manual') {
+      console.log('this.state.dataRequirement.dateRequired', this.state.dataRequirement.dateRequired)
+      content = (
+        <FormItem
+        {...defaultFormItemLayout}
+        label="Date:">
+        {getFieldDecorator('dateRequired', {
+          initialValue: moment(this.state.dataRequirement.dateRequired === null ? moment(new Date()) : this.state.dataRequirement.dateRequired), 
+          rules: [{ 
+            type: 'object', 
+            message: 'Please select a required date!' 
+          }]
+        })(
+          <DatePicker />
+        )}
+      </FormItem>
+      )
+    } else {
+      content = (
+        <div>
+          <FormItem
+            {...defaultFormItemLayout}
+            label=" ">
+            {getFieldDecorator('quantity', {
+              initialValue: this.state.dataRequirement.quantity,
+            })(
+              <Input />
+            )}
+          </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
+            label=" ">
+            {getFieldDecorator('unit', {
+              initialValue: this.state.dataRequirement.unit,
+            })(
+              <Select>
+                <Option value='Days'>Days</Option>
+                <Option value='Weeks'>Weeks</Option>
+              </Select>
+            )}
+          </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
+            label=" ">
+            {getFieldDecorator('required', {
+              initialValue: this.state.dataRequirement.required,
+            })(
+              <Select>
+                <Option value='After Award'>After Award</Option>
+              </Select>
+            )}
+          </FormItem>
+        </div>
+      )
+    }
+    return (
+      <Modal
+        title="Edit Data Requirement"
+        onCancel={this.handleCancelEditDataRequirement}
+        onOk={this.handleCancelEditDataRequirement}
+        okText="Save"
+        visible={true}>
+        <Form onSubmit={this.handleSubmit.bind(this)}>
+          <FormItem
+            {...defaultFormItemLayout}
+            label="Code:">
+            {getFieldDecorator('documentCode.code', {
+              initialValue: this.state.dataRequirement.documentCode.code
+            })(
+              <b>{this.state.dataRequirement.documentCode.code}</b>
+            )}
+          </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
+            label="Description:">
+            {getFieldDecorator('documentCode.description', {
+              initialValue: this.state.dataRequirement.documentCode.description
+            })(
+              <b>{this.state.dataRequirement.documentCode.description}</b>
+            )}
+          </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
+            label="Comments">
+            {getFieldDecorator('comments', {
+              initialValue: this.state.dataRequirement.comments,
+            })(
+              <TextArea />
+            )}
+          </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
+            label='Required Date:'>
+            {getFieldDecorator('required', {
+              initialValue: this.state.dataRequirement.required
+            })(
+              <RadioGroup onChange={this.handleOnChangeDataRequirementRequired}>
+                <RadioButton value="Manual">Manually set</RadioButton>
+                <RadioButton value="After Award">Calculated</RadioButton>
+              </RadioGroup>
+            )}
+          </FormItem>
+          {content}
+        </Form>
+      </Modal>
+    )
+  }
+
+  renderDataRequirementsTable = () => {
     let userDataRequirements = [
       {
         title: 'Code',
@@ -178,57 +472,214 @@ class Orders extends Component {
         sorter: (a, b) => a.documentCode.description > b.documentCode.description ? 1 : b.documentCode.description > a.documentCode.description ? -1 : 0,
       },
       {
+        title: 'Required Date',
+        dataIndex: 'dateRequiredText',
+        key: 'dateRequiredText',
+        sorter: (a, b) => a.dateRequiredText > b.dateRequiredText ? 1 : b.dateRequiredText > a.dateRequiredText ? -1 : 0
+      },
+      {
+        title: 'Comments',
+        dataIndex: 'comments',
+        key: 'comments'
+      },
+      {
         key: 'action',
         title: (
-            <Button type="primary" icon="file-add" onClick={this.toggleAddDataRequirementMode.bind(this)} disabled={this.state.order.id === undefined ? true : false}>Add Data Requirements</Button>
+            <Button type="primary" icon="file-add" onClick={() => this.setDataRequirementMode('add')} disabled={this.state.order.id === undefined ? true : false}>Add Data Requirements</Button>
         ),
         render: (record) => (
           <span>
+            <Button icon="edit" onClick={() => this.handleEditDataRequirement(record)}>Edit</Button> 
             <Button icon="delete" onClick={() => this.handleDeleteDataRequirement(record)}>Remove</Button> 
           </span>
         )
       }
     ]
     return (
-      <Table
-        columns={userDataRequirements}
-        dataSource={this.state.dataRequirements}
-        rowKey="id"
-        pagination={{ pageSize: 5 }}
-        footer={(data => 
-          <Button type="primary" icon="database" onClick={this.toggleAddDataRequirementMode.bind(this)} disabled={this.state.order.id === undefined ? true : false}>Assign Template</Button>
-        )}
-      />
+      <div>
+        <Table
+          columns={userDataRequirements}
+          dataSource={this.state.dataRequirements}
+          rowKey="id"
+          pagination={this.state.maximiseDataRequirements ? {pageSize: 100} : {pageSize: 8}}
+          scroll={this.state.maximiseDataRequirements ? { y: '65vh', x: '60wv'} : {y: null, x: null}}
+          size='small'
+          footer={(data => 
+            <div>
+              <Button type="primary" icon="database" onClick={() => this.setDataRequirementMode('template')} disabled={this.state.order.id === undefined ? true : false}>Assign Template</Button>
+              <MaximiseButton onMaximise={this.toggleMaximiseDataRequirements} />
+            </div>
+          )}
+        />
+      </div>
     )
   }
 
-  renderForm() {
-    const { getFieldDecorator } = this.props.form;
-
+  renderAddDataRequirements = () => {
+    const addDataRequirementColumns = [
+      {
+        title: 'Code',
+        dataIndex: 'code',
+        key: 'code',
+        sorter: (a, b) => a.code > b.code ? 1 : b.code > a.code ? -1 : 0
+      },
+      {
+        title: 'Description',
+        dataIndex: 'description',
+        key: 'description',
+        sorter: (a, b) => a.description > b.description ? 1 : b.description > a.description ? -1 : 0
+      }
+    ]
     return (
-      <FormHelper
-        onSubmit={this.handleSubmit.bind(this)}
-        onDelete={deleteOrder}
-        onInsert={createOrder}
-        onUpdate={updateOrder}
-        onProgress={this.handleProgress}
-        record={this.state.order}>
-        <Form onSubmit={this.handleSubmit.bind(this)}>
-          <FormItem
-            {...defaultFormItemLayout}
-            label="Number:">
-            {getFieldDecorator('number', {
-              initialValue: this.state.order.number,
-              rules: [{ 
-                required: true, 
-                message: 'Please input an order number!', 
-                whitespace: true }],
-            })(
-              <Input />
-            )}
-          </FormItem>
-          <Tabs>
-            <TabPane tab="Details" key="1">
+      <div>
+        <h2>Select Document Codes to add to Package</h2>
+        <RecordSelector
+          searchField='code'
+          searchText="Search by document code"
+          columns={addDataRequirementColumns}
+          dataSource={this.state.nonAssignedDocumentCodes}
+          targetDataSource={this.state.addDataRequirements}
+          onChange={this.handleAddDataRequirementsChange}
+          pagination={this.state.maximiseDataRequirements ? {pageSize: 100} : {pageSize: 8}}
+          scroll={this.state.maximiseDataRequirements ? { y: '65vh', x: '60wv'} : {y: null, x: null}}
+          size='small'
+          footer={(data => 
+            <TableFooter>
+              <Button 
+                type="primary"
+                onClick={this.handleAddDataRequirements.bind(this)}
+                disabled={this.state.addDataRequirements.length === 0}>
+                Update data requirements
+              </Button>
+              <Button onClick={this.handleCancelAddDataRequirements.bind(this)}>Cancel</Button>
+              <MaximiseButton onMaximise={this.toggleMaximiseDataRequirements} />
+            </TableFooter>
+          )}
+        />
+      </div>
+    )
+  }
+
+  renderSelectTemplate = () => {
+    const selectTemplateColumns = [
+      {
+        title: 'Name',
+        dataIndex: 'name',
+        key: 'name',
+        sorter: (a, b) => a.name > b.name ? 1 : b.name > a.name ? -1 : 0
+      }
+    ]
+    return (
+      <div>
+        <h2>Select Template(s) to add to Package</h2>
+        <RecordSelector
+          searchField='name'
+          searchText="Search by package tempate name"
+          columns={selectTemplateColumns}
+          dataSource={this.state.packageTemplates}
+          targetDataSource={this.state.addPackageTemplates}
+          onChange={this.handleSelectTemplatesChange}
+          pagination={this.state.maximiseDataRequirements ? {pageSize: 100} : {pageSize: 8}}
+          scroll={this.state.maximiseDataRequirements ? { y: '65vh', x: '60wv'} : {y: null, x: null}}
+          size='small'
+          footer={(data => 
+            <TableFooter>
+              <Button 
+                type="primary"
+                onClick={this.handleUpdateSelectTemplates.bind(this)}
+                disabled={this.state.addPackageTemplates.length === 0}>
+                Assign package template(s)
+              </Button>
+              <Button onClick={this.handleCancelSelectTemplates.bind(this)}>Cancel</Button>
+              <MaximiseButton onMaximise={this.toggleMaximiseDataRequirements} />
+            </TableFooter>
+          )}
+        />
+      </div>
+    )
+  }
+
+  renderDataRequirements = () => {
+    if (this.state.maximiseDataRequirements) {
+      let style = {
+        height: 'calc(100vh - 85px)'
+      }
+      return (
+        <Modal
+          title="Data Requirements"
+          footer={null}
+          style={{top: 0}}
+          width='100vw'
+          bodyStyle={style}
+          visible={true}
+          onCancel={this.toggleMaximiseDataRequirements}>
+          {this.state.dataRequirementMode == 'add' ? 
+            this.renderAddDataRequirements() : 
+            this.state.dataRequirementMode == 'template' ? 
+              this.renderSelectTemplate() :
+              this.state.dataRequirementMode == 'edit' ?
+                this.renderEditDataRequirement() :
+                this.renderDataRequirementsTable()}
+        </Modal>
+      )
+    } else {
+      return ( 
+        this.state.dataRequirementMode == 'add' ? 
+          this.renderAddDataRequirements() : 
+          this.state.dataRequirementMode == 'template' ? 
+            this.renderSelectTemplate() :
+            this.state.dataRequirementMode == 'edit' ?
+              this.renderEditDataRequirement() :
+              this.renderDataRequirementsTable()
+      )
+    }
+  }
+
+  renderCalendarEvents = (value) => {
+    const listData = [
+      { type: 'success', content: 'Content the supplier' },
+      { type: 'success', content: 'Expecting some stuff from the supplier' },
+      { type: 'success', content: 'Close out the order' },
+    ]
+    return (
+      <ul className="events">
+        {
+          listData.map(item => (
+            <li key={item.content}>
+              <Badge status={item.type} text={item.content} />
+            </li>
+          ))
+        }
+      </ul>
+    );
+  }
+
+  renderForm() {
+    const { getFieldDecorator } = this.props.form
+    return (
+      <Tabs>
+        <TabPane tab="Details" key="1">
+          <FormHelper
+            onSubmit={this.handleSubmit.bind(this)}
+            onDelete={deleteOrder}
+            onInsert={createOrder}
+            onUpdate={updateOrder}
+            onProgress={this.handleProgress}
+            record={this.state.order}>
+            <Form onSubmit={this.handleSubmit.bind(this)}>
+              <FormItem
+                {...defaultFormItemLayout}
+                label="Number:">
+                {getFieldDecorator('number', {
+                  initialValue: this.state.order.number,
+                  rules: [{ 
+                    required: true, 
+                    message: 'Please input an order number!', 
+                    whitespace: true }],
+                })(
+                  <Input />
+                )}
+              </FormItem>
               <FormItem
                 {...defaultFormItemLayout}
                 label="Description:">
@@ -306,16 +757,34 @@ class Orders extends Component {
                   <DatePicker />
                 )}
               </FormItem>
-            </TabPane>
-            <TabPane tab="Data Requirements" key="2">
-              {this.renderDataRequirements()}
-            </TabPane>
-            <TabPane tab="Document Schedule" key="3">
-            </TabPane>
-          </Tabs>
-        </Form>
-      </FormHelper>
+            </Form>
+          </FormHelper>
+        </TabPane>
+        <TabPane tab="Attachments" key="2">
+        </TabPane>
+        <TabPane tab="Data Requirements" key="3">
+          {this.renderDataRequirements()}
+        </TabPane>
+        <TabPane tab="Document Schedule" key="4">
+        </TabPane>
+        <TabPane tab="Calendar" key="5">
+            <Calendar 
+              dateCellRender={this.renderCalendarEvents} 
+              mode={this.state.collapsed ? 'month' : 'year'}
+            />
+        </TabPane>
+        <TabPane tab="History" key="6">
+        </TabPane>
+      </Tabs>
     )
+  }
+
+  toggleMaximiseDataRequirements = () => {
+    this.setState({maximiseDataRequirements: !this.state.maximiseDataRequirements })
+  }
+
+  handleToggleSide = (collapsed) => {
+    this.setState({collapsed})
   }
 
   render() {
@@ -350,7 +819,7 @@ class Orders extends Component {
     return (
       <CRUDHelper 
         form={this.props.form}
-        header="Order Maintenance"
+        header={`Order Maintenance${this.state.order.id !== undefined ? ` - ${this.state.order.number} - ${this.state.order.description}` : ''}`}
         fields={this.fields}
         rowKey="id"
         searchField="description"
@@ -364,13 +833,13 @@ class Orders extends Component {
         search={this.state.search}
         filter={this.state.filter}
         onSelect={this.handleSelect}
+        onToggleSide={this.handleToggleSide}
         params={this.props.match.params}>
-        {this.renderForm()}
+        { this.renderForm() }
       </CRUDHelper>
     )
   }
 }
-
 
 Orders = Form.create()(Orders);
 

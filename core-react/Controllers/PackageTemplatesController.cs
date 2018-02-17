@@ -124,24 +124,24 @@ namespace core_react.Controllers
         }
     }
 
-    [Produces("application/json")]
-    [Route("api/PackageTemplate/DocumentCodes")]
-    public class PackageTemplatesDocumentCodesController : Controller
-    {
-        private readonly SupplierPortalContext _context;
+    //[Produces("application/json")]
+    //[Route("api/PackageTemplate/DocumentCodes")]
+    //public class PackageTemplatesDocumentCodesController : Controller
+    //{
+    //    private readonly SupplierPortalContext _context;
 
-        public PackageTemplatesDocumentCodesController(SupplierPortalContext context)
-        {
-            _context = context;
-        }
+    //    public PackageTemplatesDocumentCodesController(SupplierPortalContext context)
+    //    {
+    //        _context = context;
+    //    }
 
-         // GET: api/PackageTemplate/DocumentCodes/5
-        [HttpGet("{id}")]
-        public List<PackageTemplateItem> GetPackageTemplateDocumentCodes([FromRoute] int id)
-        {
-            List<PackageTemplateItem> packageTemplateDocumentCodes = (from p in _context.PackageTemplateDocumentCodes where p.PackageTemplateId == id select p).Include(x => x.DocumentCode).ToList();
-            //List<PackageTemplateItem> packageTemplateDocumentCodes = (from p in _context.PackageTemplateDocumentCodes where p.PackageTemplateId == id select p).ToList();
-            return packageTemplateDocumentCodes;
-        }
-    }
-    }
+    //     // GET: api/PackageTemplate/DocumentCodes/5
+    //    [HttpGet("{id}")]
+    //    public List<PackageTemplateItem> GetPackageTemplateDocumentCodes([FromRoute] int id)
+    //    {
+    //        List<PackageTemplateItem> packageTemplateDocumentCodes = (from p in _context.PackageTemplateDocumentCodes where p.PackageTemplateId == id select p).Include(x => x.DocumentCode).ToList();
+    //        //List<PackageTemplateItem> packageTemplateDocumentCodes = (from p in _context.PackageTemplateDocumentCodes where p.PackageTemplateId == id select p).ToList();
+    //        return packageTemplateDocumentCodes;
+    //    }
+    //}
+ }

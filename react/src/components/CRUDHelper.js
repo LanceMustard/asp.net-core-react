@@ -16,7 +16,8 @@ import {
   Wrapper,
   Side,
   Body
-} from './Layout'
+} from 'components/Layout'
+import AutoSizeTable from 'components/AutoSizeTable'
 import '../styles/site.css'
 
 const Search = Input.Search
@@ -31,6 +32,10 @@ class CRUDWrapper extends Component {
   componentWillMount() {
     this.validateComponentSetup()
     this.props.removeBreadcrumb(this.props.path)
+  }
+
+  componentDidMount() {
+    const height = document.getElementById('root').clientHeight;
   }
 
   validateComponentSetup = () => {
@@ -71,7 +76,11 @@ class CRUDWrapper extends Component {
   }
 
   handleSideToggle = () => {
-    this.setState({ collapsed: !this.state.collapsed })
+    let collapsed = !this.state.collapsed
+    this.setState({ collapsed })
+    if (this.props.onToggleSide) {
+      this.props.onToggleSide(collapsed)
+    }
   }
 
   render() {
@@ -91,40 +100,45 @@ class CRUDWrapper extends Component {
           </Button>
           <Title>{this.props.header}</Title>
         </Header>
-        <Wrapper inlineCollapsed={this.state.collapsed}>
-          { this.props.navigationTable || this.props.side ? (
-          <Side inlineCollapsed={this.state.collapsed} sideWidth={this.props.sideWidth}>
-            <Spin tip={this.props.sideMessage} spinning={this.props.sideMessage ? true : false}>
-              { this.props.side ? (this.props.side) : null }
-              { this.props.navigationTable ? (
-                <div>
-                  <Search
-                    prefix={searchPrefix} 
-                    placeholder={this.props.searchText ? this.props.searchText : "Search"}
-                    value={this.state.search}
-                    onChange={this.handleSearch}
-                    onPressEnter={this.handleSearch}/>
-                  <Table
-                    columns={this.props.navigationTable.columns}
-                    dataSource={this.state.filter || this.props.navigationTable.dataSource}
-                    rowKey={this.props.rowKey ? this.props.rowKey : "id"}
-                    pagination={this.props.navigationTable.rowKey ? this.props.navigationTable.pagination : { pageSize: 10 }}
-                    onRowClick={this.handleRowClick}
-                    rowClassName={this.handleRowClassName}/>
-                </div>
-              ) : null }
-            </Spin>          
-          </Side>) : null }
-          <Body>
-            <Spin tip={this.props.bodyMessage} spinning={this.props.bodyMessage ? true : false}>
-              {children}
-             </Spin>
-          </Body>
-        </Wrapper>
+        <div ref={ parentElement => !this.state.parentElement && this.setState({ parentElement }) }>
+          <Wrapper inlineCollapsed={this.state.collapsed} >
+            { this.props.navigationTable || this.props.side ? (
+            <Side inlineCollapsed={this.state.collapsed} sideWidth={this.props.sideWidth}>
+              <Spin tip={this.props.sideMessage} spinning={this.props.sideMessage ? true : false}>
+                { this.props.side ? (this.props.side) : null }
+                { this.props.navigationTable ? (
+                  <div>
+                    <Search
+                      prefix={searchPrefix} 
+                      placeholder={this.props.searchText ? this.props.searchText : "Search"}
+                      value={this.state.search}
+                      onChange={this.handleSearch}
+                      onPressEnter={this.handleSearch}/>
+                    <AutoSizeTable
+                      columns={this.props.navigationTable.columns}
+                      size='small'
+                      parentElement={this.state.parentElement}
+                      dataSource={this.state.filter || this.props.navigationTable.dataSource}
+                      rowKey={this.props.rowKey ? this.props.rowKey : "id"}
+                      onRowClick={this.handleRowClick}
+                      rowClassName={this.handleRowClassName}/>
+                  </div>
+                ) : null }
+              </Spin>          
+            </Side>) : null }
+            <Body>
+              <Spin tip={this.props.bodyMessage} spinning={this.props.bodyMessage ? true : false}>
+                {children}
+              </Spin>
+            </Body>
+          </Wrapper>
+        </div>
       </Spin>
     )
   }
 }
+//pagination={this.props.navigationTable.rowKey ? this.props.navigationTable.pagination : { pageSize: 10 }}
+                    
 
 function mapStateToProps(state) {
   return { breadcrumbs: state.breadcrumbs }

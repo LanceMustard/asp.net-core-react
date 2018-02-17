@@ -5,6 +5,7 @@ import {
   Form,
   Input,
   Select,
+  Button,
   Table
 } from 'antd'
 import styled from 'styled-components'
@@ -13,17 +14,26 @@ import FormHelper, {
 } from '../../components/FormHelper'
 import BreadcrumbLink from '../../components/BreadcrumbLink'
 import CRUDHelper from '../../components/CRUDHelper'
+import RecordSelector from 'components/RecordSelector'
+import { TableFooter } from 'components/Layout'
+import confirm from 'components/confirm'
+import { debug } from 'components/debug'
 import {
   fetchPackageTemplates,
   fetchPackageTemplate,
-  fetchPackageTemplateDocumentCodes,
   fetchPackageTemplatesByLibrary,
   createPackageTemplate,
   updatePackageTemplate,
-  deletePackageTemplate
+  deletePackageTemplate,
+  fetchPackageTemplateItems,
+  deletePackageTemplateItem,
+  createPackageTemplateItems
 } from './api'
-import { fetchLibraries } from 'containers/libraries/api'
-import { debug } from 'components/debug'
+import { 
+  fetchLibrary,
+  fetchLibraries 
+} from 'containers/libraries/api'
+import { fetchDocumentCodes } from 'containers/documentCodes/api'
 
 const FormItem = Form.Item
 const Option = Select.Option
@@ -43,38 +53,18 @@ class PackageTemplates extends Component {
         sorter: (a, b) => a.name.length - b.name.length,
       }
     ]
-    this.documentCodeColumns = [
-      {
-        title: 'Document Codes',
-        dataIndex: 'documentCode.code',
-        key: 'documentCode.code',
-        sorter: (a, b) => a.documentCode.code.length - b.documentCode.code.length,
-      },
-      {
-        title: 'Description',
-        dataIndex: 'documentCode.description',
-        key: 'documentCode.description',
-        sorter: (a, b) => a.documentCode.description.length - b.documentCode.description.length,
-      },
-      {
-        key: 'action',
-        render: (text, record) => (
-          <span>
-            <BreadcrumbLink 
-              from={`/packagetempletes/${this.state.packageTemplate.id}`} 
-              to={`/documentCodes/${record.documentCode.id}`}
-              description={this.state.packageTemplate.name} />
-          </span>
-        )
-      }
-    ]
-    this.fields = ['name']
+    this.fields = ['libraryId, name']
   }
 
   state = {
     packageTemplates: [],
     packageTemplate: {},
+    packageTemplateItems: [],
+    addDocumentCodesMode: false,
     documentCodes: [],
+    nonAssignedDocumentCodes: [],
+    addDocumentCodes: [],
+    libraryId: {},
     libraries: [],
     tableMessage: 'Loading Package Templates...',
     formMessage: null,
@@ -92,14 +82,21 @@ class PackageTemplates extends Component {
   }
 
   selectLibrary = (id) => {
-    // populate packageTemplate tables
-    fetchPackageTemplatesByLibrary(id)
+    this.setState({tableMessage: 'Loading Reference Library...'})
+    fetchLibrary(id)
     .then(res => {
-      this.setState({
-        packageTemplates: res.data,
-        packageTemplate: {},
-        documentCodes: [],
-        tableMessage: null
+      let library = res.data
+      fetchPackageTemplatesByLibrary(id)
+      .then(res => {
+        let packageTemplates = res.data
+        packageTemplates.sort((a, b) => a.name > b.name ? 1 : b.name > a.name ? -1 : 0) 
+        this.setState({
+          library,
+          packageTemplates,
+          packageTemplate: {},
+          packageTemplateItems: [],
+          tableMessage: null
+        })
       })
     })
     .catch(err => {
@@ -113,12 +110,14 @@ class PackageTemplates extends Component {
     fetchPackageTemplate(id)
     .then(res => {
       var packageTemplate = res.data
-      fetchPackageTemplateDocumentCodes(id)
+      fetchPackageTemplateItems(id)
       .then(res => {
-        console.log('fetchPackageTemplateDocumentCodes', res.data)
+        console.log('res.data', res.data)
+        let packageTemplateItems = res.data
+        packageTemplateItems.sort((a, b) => a.documentCode.code > b.documentCode.code ? 1 : b.documentCode.code > a.documentCode.code ? -1 : 0) 
         this.setState({
           packageTemplate,
-          documentCodes: res.data,
+          packageTemplateItems,
           formMessage: null
           }) 
       })
@@ -127,6 +126,64 @@ class PackageTemplates extends Component {
       this.setState({formMessage: null})
       debug(err)
     })
+  }
+
+  toggleAddDocumentCodes = () => {
+    if (!this.state.addDocumentCodesMode && this.state.documentCodes.length === 0) {
+      this.setState({formMessage: 'Loading Document Codes...'})
+      fetchDocumentCodes(this.state.library.id)
+      .then(res => {
+        // Build and sort the documentCodes array
+        let documentCodes = res.data.filter(x => x.parentId !== null)
+        documentCodes.sort((a, b) => a.code > b.code ? 1 : b.code > a.code ? -1 : 0) 
+        // Update nonAssignedDocumentCodes array and filter out all currently assigned document codes (can not add a user twice)
+        let nonAssignedDocumentCodes = documentCodes
+        this.state.packageTemplateItems.map(o => {
+          nonAssignedDocumentCodes = nonAssignedDocumentCodes.filter(x => x.id !== o.documentCode.id) 
+        })
+        this.setState({
+          addDocumentCodesMode: !this.state.addDocumentCodesMode,
+          documentCodes,
+          nonAssignedDocumentCodes,
+          formMessage: null
+        })  
+      })
+      .catch(err => {
+        debug(err)
+        this.setState({formMessage: null})
+      })
+    } else {
+      // Update nonAssignedDocumentCodes array and filter out all currently assigned document codes (can not add a user twice)
+      let nonAssignedDocumentCodes = this.state.documentCodes
+      this.state.packageTemplateItems.map(o => {
+        nonAssignedDocumentCodes = nonAssignedDocumentCodes.filter(x => x.id !== o.documentCode.id) 
+      })
+      this.setState({
+        addDocumentCodesMode: !this.state.addDocumentCodesMode,
+        nonAssignedDocumentCodes,
+        addDocumentCodes: []
+      })
+    }
+  }
+
+  handleDeleteDocumentCode = (record) => {
+    let confirmMessage = this.props.deleteMessage || `Please confirm that you want to remove document code  "${record.documentCode.code} - ${record.documentCode.description}" from this order?`
+    confirm(confirmMessage, { title: "Delete confirmation" })
+    .then((ok) => {
+      this.setState({formMessage: 'Deleting package template item...'})
+      deletePackageTemplateItem(record.id)
+      .then(res => {
+        this.setState({
+          packageTemplateItems: this.state.packageTemplateItems.filter(x => x.id !== record.id),
+          formMessage: null
+        })
+      })
+      .catch(err => {
+        debug(err)
+        this.setState({formMessage: null})
+      })
+    },
+    (cancel) => { /* do nothing */ })
   }
 
   handleSelect = (record, index, event) => {
@@ -155,19 +212,41 @@ class PackageTemplates extends Component {
       this.setState({
         packageTemplate: {},
         packageTemplates: this.state.packageTemplates.filter(x => x.id !== data.id),
-        documentCodes: []
+        packageTemplateItems: []
       })
       
     } else if (mode === 'new') {
       this.setState({
         packageTemplate: {},
-        documentCodes: []
+        packageTemplateItems: []
       })
     }
   }
 
   handleProgress = (message) => {
     this.setState({formMessage: message})
+  }
+
+  handleAddDocumentCodesChange = (data) => {
+    this.setState({addDocumentCodes: data})
+  }
+
+  handleUpdatePackageTemplateItems = () => {
+    this.setState({formMessage: 'Updating package template items...'})
+    createPackageTemplateItems(this.state.packageTemplate.id, this.state.addDocumentCodes)
+    .then(res => {
+      let packageTemplateItems = [...this.state.packageTemplateItems, ...res.data]
+      packageTemplateItems.sort((a,b) => (a.documentCode.code > b.documentCode.code) ? 1 : ((b.documentCode.code > a.documentCode.code) ? -1 : 0))
+      this.setState({
+        packageTemplateItems,
+        addDocumentCodesMode: false,
+        formMessage: null
+      })
+    })
+    .catch(err => {
+        debug(err)
+        this.setState({formMessage: null})  
+    })
   }
 
   renderForm() {
@@ -184,6 +263,15 @@ class PackageTemplates extends Component {
         <Form onSubmit={this.handleSubmit.bind(this)}>
           <FormItem
             {...defaultFormItemLayout}
+            >
+            {getFieldDecorator('libraryId', {
+              initialValue: this.state.library ? this.state.library.id : null
+            })(
+              <div/>
+            )}
+          </FormItem>
+          <FormItem
+            {...defaultFormItemLayout}
             label="Name:">
             {getFieldDecorator('name', {
               initialValue: this.state.packageTemplate.name,
@@ -197,6 +285,84 @@ class PackageTemplates extends Component {
           </FormItem>
         </Form>
       </FormHelper>
+    )
+  }
+
+  renderDocumentCodes() {
+    let documentCodeColumns = [
+      {
+        title: 'Document Codes',
+        dataIndex: 'documentCode.code',
+        key: 'documentCode.code',
+        sorter: (a, b) => a.documentCode.code.length - b.documentCode.code.length,
+      },
+      {
+        title: 'Description',
+        dataIndex: 'documentCode.description',
+        key: 'documentCode.description',
+        sorter: (a, b) => a.documentCode.description.length - b.documentCode.description.length,
+      },
+      {
+        key: 'action',
+        title: (
+          <Button type="primary" icon="file-add" onClick={() => this.toggleAddDocumentCodes()} disabled={this.state.packageTemplate.id === undefined ? true : false}>Add Document Codes</Button>
+        ),
+        render: (record) => (
+          <span>
+            <Button icon="delete" onClick={() => this.handleDeleteDocumentCode(record)}>Remove</Button> 
+          </span>
+        )
+      }
+    ]
+    return (
+      <Table
+        columns={documentCodeColumns}
+        dataSource={this.state.packageTemplateItems}
+        rowKey="id"
+        pagination={{ pageSize: 6 }}/>
+    )
+  }
+
+  renderAddDocumentCodes() {
+    const addDocumentCodesColumns = [
+      {
+        title: 'Code',
+        dataIndex: 'code',
+        key: 'code',
+        sorter: (a, b) => a.code > b.code ? 1 : b.code > a.code ? -1 : 0
+      },
+      {
+        title: 'Description',
+        dataIndex: 'description',
+        key: 'description',
+        sorter: (a, b) => a.description > b.description ? 1 : b.description > a.description ? -1 : 0
+      }
+    ]
+    return (
+      <div>
+        <h2>Select Document Codes to add to Package Template</h2>
+        <RecordSelector
+          searchField='code'
+          searchText="Search by document code"
+          columns={addDocumentCodesColumns}
+          dataSource={this.state.nonAssignedDocumentCodes}
+          targetDataSource={this.state.addDocumentCodes}
+          onChange={this.handleAddDocumentCodesChange}
+          pagination={{pageSize: 8}}
+          size='small'
+          footer={(data => 
+            <TableFooter>
+              <Button 
+                type="primary"
+                onClick={this.handleUpdatePackageTemplateItems.bind(this)}
+                disabled={this.state.addDocumentCodes.length === 0}>
+                Update package template
+              </Button>
+              <Button onClick={this.toggleAddDocumentCodes.bind(this)}>Cancel</Button>
+            </TableFooter>
+          )}
+        />
+      </div>
     )
   }
 
@@ -227,11 +393,7 @@ class PackageTemplates extends Component {
         )}
         params={this.props.match.params}>
         {this.renderForm()}
-        <Table
-            columns={this.documentCodeColumns}
-            dataSource={this.state.documentCodes}
-            rowKey="id"
-            pagination={{ pageSize: 6 }}/>
+        {this.state.addDocumentCodesMode ? this.renderAddDocumentCodes() : this.renderDocumentCodes()}
       </CRUDHelper>
     )
   }

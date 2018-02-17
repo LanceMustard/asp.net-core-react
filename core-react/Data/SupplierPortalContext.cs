@@ -136,7 +136,7 @@ namespace Core.React.Data
 
         public DbSet<DocumentCode> DocumentCodes { get; set; }
         public DbSet<PackageTemplate> PackageTemplates { get; set; }
-        public DbSet<PackageTemplateItem> PackageTemplateDocumentCodes { get; set; }
+        public DbSet<PackageTemplateItem> PackageTemplateItems { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDataRequirement> OrderDataRequirements { get; set; }
     }
